@@ -12,28 +12,21 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body
+          name: request
           required: true
           schema:
-            properties:
-              role:
-                enum:
-                  - employee
-                  - moderator
-                type: string
-            required:
-              - role
-            type: object
+            $ref: '#/definitions/DummyLoginRequest'
       responses:
         '200':
           description: Успешная авторизация
           schema:
-            $ref: '#/definitions/Token'
+            $ref: '#/definitions/DummyLoginResponse'
         '400':
           description: Неверный запрос
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       summary: Получение тестового токена
+
   /login:
     post:
       consumes:
@@ -42,29 +35,21 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body
+          name: request
           required: true
           schema:
-            properties:
-              email:
-                format: email
-                type: string
-              password:
-                type: string
-            required:
-              - email
-              - password
-            type: object
+            $ref: '#/definitions/UserLoginRequest'
       responses:
         '200':
           description: Успешная авторизация
           schema:
-            $ref: '#/definitions/Token'
+            $ref: '#/definitions/UserLoginResponse'
         '401':
           description: Неверные учетные данные
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       summary: Авторизация пользователя
+
   /products:
     post:
       consumes:
@@ -73,39 +58,27 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body
+          name: request
           required: true
           schema:
-            properties:
-              pvzId:
-                format: uuid
-                type: string
-              type:
-                enum:
-                  - электроника
-                  - одежда
-                  - обувь
-                type: string
-            required:
-              - type
-              - pvzId
-            type: object
+            $ref: '#/definitions/ProductCreationRequest'
       responses:
         '201':
           description: Товар добавлен
           schema:
-            $ref: '#/definitions/Product'
+            $ref: '#/definitions/ProductCreationResponse'
         '400':
           description: Неверный запрос или нет активной приемки
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
         '403':
           description: Доступ запрещен
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       security:
         - bearerAuth: []
       summary: Добавление товара в текущую приемку (только для сотрудников ПВЗ)
+
   /pvz:
     get:
       produces:
@@ -162,6 +135,7 @@ paths:
       security:
         - bearerAuth: []
       summary: Получение списка ПВЗ с фильтрацией по дате приемки и пагинацией
+
     post:
       consumes:
         - application/json
@@ -169,27 +143,28 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body
+          name: request
           required: true
           schema:
-            $ref: '#/definitions/PVZ'
+            $ref: '#/definitions/PVZCreationRequest'
       responses:
         '201':
           description: ПВЗ создан
           schema:
-            $ref: '#/definitions/PVZ'
+            $ref: '#/definitions/PVZCreationResponse'
         '400':
           description: Неверный запрос
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
         '403':
           description: Доступ запрещен
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       security:
         - bearerAuth: []
       summary: Создание ПВЗ (только для модераторов)
-  '/pvz/{pvzId}/close_last_reception':
+
+  /pvz/{pvzId}/close_last_reception:
     post:
       produces:
         - application/json
@@ -203,19 +178,20 @@ paths:
         '200':
           description: Приемка закрыта
           schema:
-            $ref: '#/definitions/Reception'
+            $ref: '#/definitions/ReceptionResponse'
         '400':
           description: Неверный запрос или приемка уже закрыта
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
         '403':
           description: Доступ запрещен
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       security:
         - bearerAuth: []
       summary: Закрытие последней открытой приемки товаров в рамках ПВЗ
-  '/pvz/{pvzId}/delete_last_product':
+
+  /pvz/{pvzId}/delete_last_product:
     post:
       produces:
         - application/json
@@ -231,16 +207,15 @@ paths:
         '400':
           description: 'Неверный запрос, нет активной приемки или нет товаров для удаления'
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
         '403':
           description: Доступ запрещен
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       security:
         - bearerAuth: []
-      summary: >-
-        Удаление последнего добавленного товара из текущей приемки (LIFO, только
-        для сотрудников ПВЗ)
+      summary: Удаление последнего добавленного товара из текущей приемки (LIFO, только для сотрудников ПВЗ)
+
   /receptions:
     post:
       consumes:
@@ -249,32 +224,27 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body
+          name: request
           required: true
           schema:
-            properties:
-              pvzId:
-                format: uuid
-                type: string
-            required:
-              - pvzId
-            type: object
+            $ref: '#/definitions/ReceptionCreationRequest'
       responses:
         '201':
           description: Приемка создана
           schema:
-            $ref: '#/definitions/Reception'
+            $ref: '#/definitions/ReceptionResponse'
         '400':
           description: Неверный запрос или есть незакрытая приемка
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
         '403':
           description: Доступ запрещен
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       security:
         - bearerAuth: []
       summary: Создание новой приемки товаров (только для сотрудников ПВЗ)
+
   /register:
     post:
       consumes:
@@ -283,43 +253,48 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: body
+          name: request
           required: true
           schema:
-            properties:
-              email:
-                format: email
-                type: string
-              password:
-                type: string
-              role:
-                enum:
-                  - employee
-                  - moderator
-                type: string
-            required:
-              - email
-              - password
-              - role
-            type: object
+            $ref: '#/definitions/UserRegistrationRequest'
       responses:
         '201':
           description: Пользователь создан
           schema:
-            $ref: '#/definitions/User'
+            $ref: '#/definitions/UserResponse'
         '400':
           description: Неверный запрос
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/ErrorResponse'
       summary: Регистрация пользователя
+
 definitions:
-  Error:
+  ErrorResponse:
     properties:
       message:
         type: string
     required:
       - message
     type: object
+
+  DummyLoginResponse:
+    type: string
+
+  UserLoginResponse:
+    type: string
+
+  ProductCreationResponse:
+    $ref: '#/definitions/Product'
+
+  PVZCreationResponse:
+    $ref: '#/definitions/PVZ'
+
+  ReceptionResponse:
+    $ref: '#/definitions/Reception'
+
+  UserResponse:
+    $ref: '#/definitions/User'
+
   PVZ:
     properties:
       city:
@@ -337,6 +312,7 @@ definitions:
     required:
       - city
     type: object
+
   Product:
     properties:
       dateTime:
@@ -358,6 +334,7 @@ definitions:
       - type
       - receptionId
     type: object
+
   Reception:
     properties:
       dateTime:
@@ -379,8 +356,10 @@ definitions:
       - pvzId
       - status
     type: object
+
   Token:
     type: string
+
   User:
     properties:
       email:
@@ -398,10 +377,90 @@ definitions:
       - email
       - role
     type: object
+
+  DummyLoginRequest:
+    properties:
+      role:
+        enum:
+          - employee
+          - moderator
+        type: string
+    required:
+      - role
+    type: object
+
+  UserLoginRequest:
+    properties:
+      email:
+        format: email
+        type: string
+      password:
+        type: string
+    required:
+      - email
+      - password
+    type: object
+
+  ProductCreationRequest:
+    properties:
+      pvzId:
+        format: uuid
+        type: string
+      type:
+        enum:
+          - электроника
+          - одежда
+          - обувь
+        type: string
+    required:
+      - type
+      - pvzId
+    type: object
+
+  PVZCreationRequest:
+    properties:
+      city:
+        enum:
+          - Москва
+          - Санкт-Петербург
+          - Казань
+        type: string
+      registrationDate:
+        format: date-time
+        type: string
+    required:
+      - city
+    type: object
+
+  ReceptionCreationRequest:
+    properties:
+      pvzId:
+        format: uuid
+        type: string
+    required:
+      - pvzId
+    type: object
+
+  UserRegistrationRequest:
+    properties:
+      email:
+        format: email
+        type: string
+      password:
+        type: string
+      role:
+        enum:
+          - employee
+          - moderator
+        type: string
+    required:
+      - email
+      - password
+      - role
+    type: object
+
 securityDefinitions:
   bearerAuth:
     in: header
     name: Authorization
     type: apiKey
-x-components: {}
-
