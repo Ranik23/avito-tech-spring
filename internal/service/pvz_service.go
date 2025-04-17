@@ -2,14 +2,20 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
+
+	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
+	"github.com/Ranik23/avito-tech-spring/internal/repository"
+	"github.com/Ranik23/avito-tech-spring/internal/repository/manager"
+	"github.com/Ranik23/avito-tech-spring/pkg/errs"
 )
 
 type PVZService interface {
 	CreatePVZ(ctx context.Context, city string) (pvzID string, err error)
-	GetPVZInfo(ctx context.Context, start time.Time, end time.Time, page int, limit int) ([]PVZInfo, error)
-	AddProductToReception(ctx context.Context, pvzID string, product_type string) (productID string, err error)
+	GetPVZSInfo(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error)
+	AddProduct(ctx context.Context, pvzID string, product_type string) (productID string, err error)
 	DeleteLastProduct(ctx context.Context, pvzID string) error
 	StartReception(ctx context.Context, pvzID string) (receptionID string, err error)
 	CloseReception(ctx context.Context, pvzID string) (receptionID string, err error)
@@ -17,40 +23,222 @@ type PVZService interface {
 
 type pvzService struct {
 	logger *slog.Logger
+	pvzRepo repository.PvzRepository
+	receptionRepo repository.ReceptionRepository
+	productRepo repository.ProductRepository
+	txManager manager.TxManager
 }
 
-// AddProductToReception implements PVZService.
-func (p *pvzService) AddProductToReception(ctx context.Context, pvzID string, product_type string) (productID string, err error) {
-	panic("unimplemented")
+func NewPVZService(pvzRepo repository.PvzRepository, receptionRepo repository.ReceptionRepository,
+					productRepo repository.ProductRepository, manager manager.TxManager, logger *slog.Logger) PVZService {
+	return &pvzService{
+		logger: logger,
+		pvzRepo: pvzRepo,
+		receptionRepo: receptionRepo,
+		productRepo: productRepo,
+		txManager: manager,
+	}
 }
 
-// CloseReception implements PVZService.
+func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType string) (productID string, err error) {
+	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
+		if err != nil {
+			return errs.Wrap("failed to find the open reception", err)
+		}
+
+		if reception == nil {
+			return ErrAllReceptionsClosed
+		}
+
+		productID, err = p.productRepo.CreateProduct(txCtx, productType, reception.ID)
+		if err != nil {
+			return errs.Wrap("failed to create the product", err)
+		}
+
+		return nil
+	})
+	
+	if err != nil {
+		p.logger.Error("Failed to add the product to the open reception",
+				slog.String("error", err.Error()),
+				slog.String("pvzID", pvzID),
+				slog.String("productType", productType))
+
+		return "", err
+	}
+
+	return productID, nil
+}
+
 func (p *pvzService) CloseReception(ctx context.Context, pvzID string) (receptionID string, err error) {
-	panic("unimplemented")
+	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
+		if err != nil {
+			return errs.Wrap("failed to find the open", err)
+		}
+
+		if reception == nil {
+			return ErrNotFound
+		}
+	
+		err = p.receptionRepo.UpdateReceptionStatus(txCtx, reception.ID, "Closed")
+		if err != nil {
+			return errs.Wrap("failed to updata the status", err)
+		}
+	
+		receptionID = reception.ID
+		return nil
+	})
+	
+	if err != nil {
+		p.logger.Error("Failed to close the reception",
+				slog.String("error", err.Error()), 
+				slog.String("pvzID", pvzID))
+
+		return "", err
+	}
+
+	return receptionID, nil
 }
 
-// CreatePVZ implements PVZService.
 func (p *pvzService) CreatePVZ(ctx context.Context, city string) (pvzID string, err error) {
-	panic("unimplemented")
+	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+		pvzID, err = p.pvzRepo.CreatePVZ(txCtx, city)
+		if err != nil {
+			if errors.Is(err, repository.ErrAlreadyExists) {
+				return ErrAlreadyExists
+			}
+			return errs.Wrap("failed to create PVZ", err)
+		}
+		return nil
+	})
+
+	if err != nil {
+		p.logger.Error("Failed to do the transaction CreatePvz",
+					slog.String("error", err.Error()),
+					slog.String("city", city))
+
+		return "", err
+	}
+
+	return pvzID, nil
 }
 
-// DeleteLastProduct implements PVZService.
 func (p *pvzService) DeleteLastProduct(ctx context.Context, pvzID string) error {
-	panic("unimplemented")
+	err := p.txManager.Do(ctx, func(txCtx context.Context) error {
+		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
+		if err != nil {
+			return errs.Wrap("failed to find the opne reception", err)
+		}
+
+		if reception == nil {
+			return ErrAllReceptionsClosed
+		}
+
+		lastProduct, err := p.productRepo.FindTheLastProduct(txCtx, pvzID)
+		if err != nil {
+			if errors.Is(err, repository.ErrNotFound) {
+				return ErrEmpty
+			}
+			return errs.Wrap("failed to find the last product", err)
+		}
+
+		err = p.productRepo.DeleteProduct(txCtx, lastProduct.ID)
+		if err != nil {
+			return errs.Wrap("failed to delete the product", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		p.logger.Error("Failed to delete the last product", 
+				slog.String("error", err.Error()),
+				slog.String("pvzID", pvzID))
+
+		return err
+	}
+
+	return nil
 }
 
-// GetPVZInfo implements PVZService.
-func (p *pvzService) GetPVZInfo(ctx context.Context, start time.Time, end time.Time, page int, limit int) ([]PVZInfo, error) {
-	panic("unimplemented")
+func (p *pvzService) GetPVZSInfo(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error) {
+
+	var pvZsInfo []domain.PvzInfo
+
+	err := p.txManager.Do(ctx, func(txCtx context.Context) error {
+		pvzs, err := p.pvzRepo.GetPVZS(txCtx, offset, limit)
+		if err != nil {
+			return errs.Wrap("failed to get pvzs", err)
+		}
+		for _, pvz := range pvzs {
+
+			receptions, err := p.receptionRepo.GetReceptionsFiltered(txCtx, pvz.ID, start, end)
+			if err != nil {
+				return errs.Wrap("fail to get receptions filtered", err)
+			}
+
+			var receptionsInfo []domain.ReceptionInfo
+
+			for _, reception := range receptions {
+				products, err := p.productRepo.GetProducts(txCtx, reception.ID)
+				if err != nil {
+					return errs.Wrap("fail to get the products", err)
+				}
+
+				receptionsInfo = append(receptionsInfo, domain.ReceptionInfo{
+					Reception: *reception,
+					Products: products,
+				})
+			}
+
+			pvZsInfo = append(pvZsInfo, domain.PvzInfo{
+				Pvz: pvz,
+				Receptions: receptionsInfo,
+			})
+		}
+
+		return nil
+	})
+	if err != nil {
+		p.logger.Error("Failed to get PVZS info",
+				slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	return pvZsInfo, nil
 }
 
 // StartReception implements PVZService.
 func (p *pvzService) StartReception(ctx context.Context, pvzID string) (receptionID string, err error) {
-	panic("unimplemented")
+	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
+		if err != nil {
+			return errs.Wrap("find open reception", err)
+		}
+
+		if reception != nil {
+			return ErrAlreadyOpen 
+		}
+
+		receptionID, err = p.receptionRepo.CreateReception(txCtx, pvzID)
+		if err != nil {
+			return errs.Wrap("create reception", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		p.logger.Error("Failed to start reception",
+			slog.String("error", err.Error()),
+			slog.String("pvzID", pvzID))
+
+		return "", err
+	}
+
+	return receptionID, nil
 }
 
-func NewPVZService(logger *slog.Logger) PVZService {
-	return &pvzService{
-		logger: logger,
-	}
-}
+
