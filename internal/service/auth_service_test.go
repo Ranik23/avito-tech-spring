@@ -9,7 +9,6 @@ import (
 
 	hashermock "github.com/Ranik23/avito-tech-spring/internal/hasher/mock"
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
-	managermock "github.com/Ranik23/avito-tech-spring/internal/repository/manager/mock"
 	repomock "github.com/Ranik23/avito-tech-spring/internal/repository/mock"
 	tokenmock "github.com/Ranik23/avito-tech-spring/internal/token/mock"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +23,7 @@ func TestLogin_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
@@ -60,7 +59,7 @@ func TestLogin_UserNotFound(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
@@ -91,7 +90,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
@@ -128,7 +127,7 @@ func TestRegister_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
@@ -161,7 +160,7 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
@@ -192,7 +191,7 @@ func TestDummyLogin_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
@@ -214,7 +213,7 @@ func TestDummyLogin_InvalidRole(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockUserRepo := repomock.NewMockUserRepository(ctrl)
-	mockTxManager := managermock.NewMockTxManager(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 

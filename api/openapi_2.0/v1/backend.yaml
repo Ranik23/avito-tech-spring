@@ -3,6 +3,7 @@ info:
   description: Сервис для управления ПВЗ и приемкой товаров
   title: backend service
   version: 1.0.0
+host: localhost:8080
 paths:
   /dummyLogin:
     post:

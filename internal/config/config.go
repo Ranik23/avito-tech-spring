@@ -8,11 +8,11 @@ import (
 
 
 type Config struct {           
-	HTTPServer   HTTPServerConfig   `yaml:"http"`
-	GRPCServer   GRPCServerConfig   `yaml:"grpc"`
-	Storage      StorageConfig      `yaml:"storage"`
-	SecretKey    string				`yaml:"secret"`
-	Cities		 []string			`yaml"cities"`
+	HTTPServer   HTTPServerConfig   `yaml:"HTTPServer"`
+	GRPCServer   GRPCServerConfig   `yaml:"GRPCServer"`
+	Storage      StorageConfig      `yaml:"Storage"`
+	SecretKey    string				`yaml:"-"`
+	Cities		 []string			`yaml:"Cities"`
 }
 
 func LoadConfig(configPath, envPath string) (*Config, error) {
@@ -30,16 +30,21 @@ func LoadConfig(configPath, envPath string) (*Config, error) {
 		return nil, err
 	}
 
-	viper.AutomaticEnv()
-
-	viper.BindEnv("storage.host", "DB_HOST") //nolint
-	viper.BindEnv("storage.password", "DB_PASSWORD") //nolint
+	viper.AutomaticEnv() // для docker override
 
 	var config Config
 	err = viper.Unmarshal(&config)
 	if err != nil {
 		return nil, err 
 	}
+
+	config.SecretKey = viper.GetString("SECRET_KEY")
+	
+	config.Storage.Host = viper.GetString("DB_HOST")
+	config.Storage.Password = viper.GetString("DB_PASSWORD")
+	config.Storage.Name = viper.GetString("DB_NAME")
+	config.Storage.Username = viper.GetString("DB_USERNAME")
+
 
 	return &config, nil
 }

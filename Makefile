@@ -8,3 +8,10 @@ protoc:
 
 run:
 	go run cmd/main/main.go
+
+
+docker:
+	docker build -t my-app .
+
+compose:
+  docker compose up 

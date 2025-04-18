@@ -27,7 +27,6 @@ func NewAuthController(service service.Service) AuthController {
 }
 
 
-
 func (a *authController) DummyLogin(c *gin.Context) {
 	
 	var req dto.DummyLoginReq

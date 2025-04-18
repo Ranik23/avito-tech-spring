@@ -9,5 +9,12 @@ GRPCServer:
 Storage:
   Host: "0.0.0.0"
   Port: "5432"
-  Database: "avito"
-  User: "postgres"
+
+  MaxConnections: 100
+  MinConnections: 20
+  MaxLifeTime: 3600
+  MaxIdleTime: 300
+  HealthCheckPeriod: 30
+
+
+Cities: Moscow, Kazan

@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/Ranik23/avito-tech-spring/internal/hasher"
-	"github.com/Ranik23/avito-tech-spring/internal/repository/manager"
 	"github.com/Ranik23/avito-tech-spring/internal/repository"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
 	"github.com/Ranik23/avito-tech-spring/pkg/errs"
@@ -20,7 +19,7 @@ type AuthService interface {
 
 type authService struct {
 	userRepo 	repository.UserRepository
-	txManager 	manager.TxManager
+	txManager 	repository.TxManager
 	token	    token.Token  
 	hasher		hasher.Hasher
 	logger 		*slog.Logger
@@ -29,7 +28,7 @@ type authService struct {
 
 func NewAuthService(
 	userRepo 	repository.UserRepository,
-	txManager 	manager.TxManager,
+	txManager 	repository.TxManager,
 	token 		token.Token,
 	hasher		hasher.Hasher,
 	logger 		*slog.Logger,

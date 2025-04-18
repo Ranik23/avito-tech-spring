@@ -5,11 +5,11 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
 	"github.com/Ranik23/avito-tech-spring/internal/config"
 	httpcontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/http"
 	"github.com/Ranik23/avito-tech-spring/internal/hasher"
-	"github.com/Ranik23/avito-tech-spring/internal/repository"
-	"github.com/Ranik23/avito-tech-spring/internal/repository/manager"
+	"github.com/Ranik23/avito-tech-spring/internal/repository/postgresql"
 	"github.com/Ranik23/avito-tech-spring/internal/service"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
 	httpserver "github.com/Ranik23/avito-tech-spring/pkg/http-server"
@@ -46,14 +46,14 @@ func NewApp() (*App, error) {
 	}
 	logger.Info("Connected to database")
 
-	ctxManager := manager.NewCtxManager(pool)
-	txManager := manager.NewTxManager(pool, logger)
+	ctxManager := postgresql.NewCtxManager(pool)
+	txManager := postgresql.NewTxManager(pool, logger, ctxManager)
 
 	logger.Info("Initializing repositories...")
-	userRepo := repository.NewPostgresUserRepository(ctxManager)
-	productRepo := repository.NewPostgresProductRepository(ctxManager)
-	pvzRepo := repository.NewPostgresPvzRepository(ctxManager)
-	receptionRepo := repository.NewPostgresReceptionRepository(ctxManager)
+	userRepo := postgresql.NewPostgresUserRepository(ctxManager)
+	productRepo := postgresql.NewPostgresProductRepository(ctxManager)
+	pvzRepo := postgresql.NewPostgresPvzRepository(ctxManager)
+	receptionRepo := postgresql.NewPostgresReceptionRepository(ctxManager)
 
 	logger.Info("Initializing services...")
 	tokenService := token.NewToken(cfg.SecretKey)

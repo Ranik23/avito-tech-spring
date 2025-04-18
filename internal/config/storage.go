@@ -10,19 +10,19 @@ import (
 
 
 type StorageConfig struct {
-	Host               string     `yaml:"host"`
-	Port               string     `yaml:"port"`
-	Name           	   string     `yaml:"name"`
-	Username           string     `yaml:"username"`
-	Password           string     `yaml:"password"`
-	SSLMode            string     `yaml:"ssl_mode"`
+	Host               string     `yaml:"Host"`
+	Port               string     `yaml:"Port"`
+	Name           	   string     `yaml:"-"`
+	Username           string     `yaml:"-"`
+	Password           string     `yaml:"-"`
+	SSLMode            string     `yaml:"-"`
 
 
-	MaxConnections    int 		  `yaml:"max_connections"`
-	MinConnections    int    	  `yaml:"min_connections"`
-	MaxLifeTime       int 		  `yaml:"max_lifetime"`
-	MaxIdleTime       int 		  `yaml:"max_idle_time"`
-	HealthCheckPeriod int 		  `yaml:"health_check_period"`
+	MaxConnections    int 		  `yaml:"MaxConnections"`
+	MinConnections    int    	  `yaml:"MinConnections"`
+	MaxLifeTime       int 		  `yaml:"MaxLifetime"`
+	MaxIdleTime       int 		  `yaml:"MaxIdleTime"`
+	HealthCheckPeriod int 		  `yaml:"HealthCheckPeriod"`
 }
 
 func (s *StorageConfig) Connect() (*pgxpool.Pool, error) {
@@ -36,9 +36,9 @@ func (s *StorageConfig) Connect() (*pgxpool.Pool, error) {
 
 	poolConfig.MaxConns = int32(s.MaxConnections)
 	poolConfig.MinConns = int32(s.MinConnections)
-	poolConfig.MaxConnLifetime = time.Duration(s.MaxLifeTime)
-	poolConfig.MaxConnIdleTime = time.Duration(s.MaxIdleTime)
-	poolConfig.HealthCheckPeriod = time.Duration(s.HealthCheckPeriod)
+	poolConfig.MaxConnLifetime = time.Duration(s.MaxLifeTime) * time.Second
+	poolConfig.MaxConnIdleTime = time.Duration(s.MaxIdleTime) * time.Second
+	poolConfig.HealthCheckPeriod = time.Duration(s.HealthCheckPeriod) * time.Second
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {

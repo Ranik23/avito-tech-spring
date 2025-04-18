@@ -9,7 +9,6 @@ import (
 
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
 	"github.com/Ranik23/avito-tech-spring/internal/repository"
-	"github.com/Ranik23/avito-tech-spring/internal/repository/manager"
 	"github.com/Ranik23/avito-tech-spring/pkg/errs"
 )
 
@@ -31,7 +30,7 @@ type pvzService struct {
 	pvzRepo       repository.PvzRepository
 	receptionRepo repository.ReceptionRepository
 	productRepo   repository.ProductRepository
-	txManager     manager.TxManager
+	txManager     repository.TxManager
 	cities        []string
 }
 
@@ -41,7 +40,7 @@ func (p *pvzService) GetPVZList(ctx context.Context) ([]domain.Pvz, error) {
 }
 
 func NewPVZService(pvzRepo repository.PvzRepository, receptionRepo repository.ReceptionRepository, cities []string,
-	productRepo repository.ProductRepository, manager manager.TxManager, logger *slog.Logger) PVZService {
+	productRepo repository.ProductRepository, manager repository.TxManager, logger *slog.Logger) PVZService {
 	return &pvzService{
 		logger:        logger,
 		pvzRepo:       pvzRepo,

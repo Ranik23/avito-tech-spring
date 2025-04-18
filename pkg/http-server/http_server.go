@@ -32,7 +32,7 @@ func New(logger *slog.Logger, config Config, handler http.Handler) *Server {
 		ReadTimeout:       config.ReadTimeout,
 		WriteTimeout:      config.WriteTimeout,
 		ReadHeaderTimeout: config.ReadHeaderTimeout,
-		Addr:              config.Port,
+		Addr:              config.Host + ":" + config.Port,
 	}
 
 	s := Server{
@@ -65,12 +65,11 @@ func (a *Server) Start(ctx context.Context) error {
 	g.Go(func() error {
 		err := a.server.ListenAndServe()
 		if err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-			} else {
+			if !errors.Is(err, http.ErrServerClosed) {
 				return err
-			}
+			} 
+			return nil
 		}
-
 		return nil
 	})
 
