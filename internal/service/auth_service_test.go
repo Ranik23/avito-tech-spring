@@ -81,7 +81,7 @@ func TestLogin_UserNotFound(t *testing.T) {
 
 	// Assertions
 	assert.Error(t, err)
-	assert.Equal(t, ErrNotFound, err)
+	assert.Equal(t, ErrUserNotFound, err)
 	assert.Empty(t, token)
 }
 

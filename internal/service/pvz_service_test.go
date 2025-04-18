@@ -28,9 +28,12 @@ func TestCreatePVZ_Success(t *testing.T) {
 
 	ctx := context.Background()
 	city := "Moscow"
-	fakePVZID := "pvz123"
+	fakePVZ := &domain.Pvz{
+		ID: "fakeID",
+		City: "Moscow",
+	}
 
-	mockPVZRepo.EXPECT().CreatePVZ(gomock.Any(), city).Return(fakePVZID, nil).Times(1)
+	mockPVZRepo.EXPECT().CreatePVZ(gomock.Any(), city).Return(fakePVZ, nil).Times(1)
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
 			return fn(ctx)
@@ -39,10 +42,11 @@ func TestCreatePVZ_Success(t *testing.T) {
 
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
-	pvzID, err := pvzService.CreatePVZ(ctx, city)
+	pvz, err := pvzService.CreatePVZ(ctx, city)
 
 	assert.NoError(t, err)
-	assert.Equal(t, fakePVZID, pvzID)
+	assert.Equal(t, pvz.City, "Moscow")
+	assert.Equal(t, pvz.ID, "fakeID")
 }
 
 func TestCreatePVZ_AlreadyExists(t *testing.T) {
@@ -58,7 +62,7 @@ func TestCreatePVZ_AlreadyExists(t *testing.T) {
 	ctx := context.Background()
 	city := "Moscow"
 
-	mockPVZRepo.EXPECT().CreatePVZ(gomock.Any(), city).Return("", repository.ErrAlreadyExists).Times(1)
+	mockPVZRepo.EXPECT().CreatePVZ(gomock.Any(), city).Return(nil, repository.ErrAlreadyExists).Times(1)
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
 			return fn(ctx)
@@ -67,10 +71,9 @@ func TestCreatePVZ_AlreadyExists(t *testing.T) {
 
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
-	pvzID, err := pvzService.CreatePVZ(ctx, city)
+	_, err := pvzService.CreatePVZ(ctx, city)
 
 	assert.ErrorIs(t, err, ErrAlreadyExists)
-	assert.Empty(t, pvzID)
 }
 
 
@@ -97,9 +100,8 @@ func TestPVZService_CloseReception(t *testing.T) {
 
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
-	id, err := pvzService.CloseReception(ctx, pvzID)
-	assert.Equal(t, err, ErrNotFound) 
-	assert.Equal(t, id, "")
+	_, err := pvzService.CloseReception(ctx, pvzID)
+	assert.Equal(t, err, ErrAllReceptionsClosed) 
 }
 
 func TestPVZService_DeleteLastProductFail(t *testing.T) {
@@ -129,7 +131,7 @@ func TestPVZService_DeleteLastProductFail(t *testing.T) {
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo,cities, mockProductRepo, mockTxManager, slog.Default())
 
 	err := pvzService.DeleteLastProduct(exampleCtx, examplePvzID)
-	assert.Equal(t, err, ErrEmpty) 
+	assert.Equal(t, err, ErrReceptionEmpty) 
 }
 
 
@@ -211,7 +213,7 @@ func TestPVZService_StartReception_Success(t *testing.T) {
 	}
 
 	mockReceptionRepo.EXPECT().FindOpen(gomock.Any(), examplePvzID).Return(nil, nil)
-	mockReceptionRepo.EXPECT().CreateReception(gomock.Any(), examplePvzID).Return(exampleReception.ID, nil)
+	mockReceptionRepo.EXPECT().CreateReception(gomock.Any(), examplePvzID).Return(exampleReception, nil)
 
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
@@ -221,9 +223,9 @@ func TestPVZService_StartReception_Success(t *testing.T) {
 
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
-	receptionID, err := pvzService.StartReception(exampleCtx, examplePvzID)
+	reception, err := pvzService.StartReception(exampleCtx, examplePvzID)
 	assert.NoError(t, err)
-	assert.Equal(t, exampleReception.ID, receptionID)
+	assert.Equal(t, exampleReception.ID, reception.ID)
 }
 
 
@@ -253,9 +255,7 @@ func TestPVZService_StartReception_AlreadyOpen(t *testing.T) {
 
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
-	receptionID, err := pvzService.StartReception(exampleCtx, examplePvzID)
-	assert.Error(t, err)
-	assert.Equal(t, "", receptionID)
+	_, err := pvzService.StartReception(exampleCtx, examplePvzID)
 	assert.Equal(t, err, ErrAlreadyOpen)
 }
 
@@ -274,10 +274,12 @@ func TestPVZService_AddProduct_Success(t *testing.T) {
 	examplePvzID := "pvz123"
 	exampleProductType := "box"
 	exampleReception := &domain.Reception{ID: "reception123"}
-	expectedProductID := "product456"
+	expectedProduct := &domain.Product{
+		ID: "id",
+	}
 
 	mockReceptionRepo.EXPECT().FindOpen(gomock.Any(), examplePvzID).Return(exampleReception, nil)
-	mockProductRepo.EXPECT().CreateProduct(gomock.Any(), exampleProductType, exampleReception.ID).Return(expectedProductID, nil)
+	mockProductRepo.EXPECT().CreateProduct(gomock.Any(), exampleProductType, exampleReception.ID).Return(expectedProduct, nil)
 
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
@@ -287,9 +289,9 @@ func TestPVZService_AddProduct_Success(t *testing.T) {
 
 	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
-	productID, err := pvzService.AddProduct(exampleCtx, examplePvzID, exampleProductType)
+	product, err := pvzService.AddProduct(exampleCtx, examplePvzID, exampleProductType)
 	assert.NoError(t, err)
-	assert.Equal(t, expectedProductID, productID)
+	assert.Equal(t, expectedProduct.ID, product.ID)
 }
 
 
@@ -341,7 +343,7 @@ func TestPVZService_AddProduct_AllReceptionsFail(t *testing.T) {
 	exampleReception := &domain.Reception{ID: "reception123"}
 
 	mockReceptionRepo.EXPECT().FindOpen(gomock.Any(), examplePvzID).Return(exampleReception, nil).Times(1)
-	mockProductRepo.EXPECT().CreateProduct(gomock.Any(), exampleProductType, exampleReception.ID).Return("", errors.New("fail"))
+	mockProductRepo.EXPECT().CreateProduct(gomock.Any(), exampleProductType, exampleReception.ID).Return(nil, errors.New("fail"))
 
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {

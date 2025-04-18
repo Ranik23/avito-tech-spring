@@ -7,14 +7,16 @@ import (
 	"net/http"
 
 	"github.com/Ranik23/avito-tech-spring/internal/config"
+	grpccontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/grpc"
 	httpcontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/http"
 	"github.com/Ranik23/avito-tech-spring/internal/hasher"
 	"github.com/Ranik23/avito-tech-spring/internal/repository/postgresql"
 	"github.com/Ranik23/avito-tech-spring/internal/service"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
+	grpcserver "github.com/Ranik23/avito-tech-spring/pkg/grpc-server"
 	httpserver "github.com/Ranik23/avito-tech-spring/pkg/http-server"
 	"github.com/gin-gonic/gin"
-	grpcserver "google.golang.org/grpc"
+	"golang.org/x/sync/errgroup"
 )
 
 type App struct {
@@ -64,13 +66,23 @@ func NewApp() (*App, error) {
 	service := service.NewService(authService, pvzService)
 
 	logger.Info("Initializing controllers...")
-	authController := httpcontrollers.NewAuthController(service)
+	authController := httpcontrollers.NewAuthController(service, logger)
 	pvzController := httpcontrollers.NewPVZController(service)
 
-	httpServerConfig := httpserver.Config{
+	httpServerConfig := &httpserver.Config{
 		Port: cfg.HTTPServer.Port,
 		Host: cfg.HTTPServer.Host,
+		StartMsg: "Hello, I Am A HTTP Server",
 	}
+
+	grpcServerConfig := &grpcserver.Config{
+		Host: cfg.GRPCServer.Host,
+		Port: cfg.GRPCServer.Port,
+		StartMsg: "Hello, I Am A GRPC Server",
+	}
+
+	grpcServerImpl := grpccontrollers.NewPVZServer(service)
+
 
 	logger.Info("Setting up HTTP routes...")
 	router := gin.New()
@@ -79,6 +91,10 @@ func NewApp() (*App, error) {
 	logger.Info("Creating HTTP server...")
 	httpServer := httpserver.New(logger, httpServerConfig, router)
 
+	logger.Info("Creating GRPC server...")
+	grpcServer := grpcserver.New(logger, grpcServerConfig, grpcServerImpl)
+
+
 	logger.Info("App initialization complete")
 
 	return &App{
@@ -86,20 +102,35 @@ func NewApp() (*App, error) {
 		logger:     logger,
 		cfg:        cfg,
 		httpServer: httpServer,
+		grcpServer: grpcServer,
 	}, nil
 }
 
 func (a *App) Start() error {
-	a.logger.Info("Starting the HTTP server...",
-		slog.String("host", a.cfg.HTTPServer.Host),
-		slog.String("port", a.cfg.HTTPServer.Port),
-	)
+	g, _ := errgroup.WithContext(context.Background())
 
-	if err := a.httpServer.Start(context.TODO()); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		a.logger.Error("Failed to start HTTP server", slog.String("error", err.Error()))
+	g.Go(func() error {
+		if err := a.httpServer.Start(context.TODO()); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.logger.Error("Failed to start HTTP server", slog.String("error", err.Error()))
+			return err
+		}
+		return nil 
+	})
+
+	g.Go(func() error {
+		if err := a.grcpServer.Start(context.TODO()); err != nil {
+			a.logger.Error("Failed to start GRPC Server", slog.String("error", err.Error()))
+			return err
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
 		return err
 	}
+	a.logger.Info("HTTP Server Gracefully stopped")
+	a.logger.Info("GRPC Server Gracefully stopped")
 
-	a.logger.Info("HTTP server gracefully stopped")
+	
 	return nil
 }

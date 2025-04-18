@@ -3,5 +3,5 @@ package dto
 
 
 type Error struct {
-	Message string
+	Message string	`json:"message"`
 }

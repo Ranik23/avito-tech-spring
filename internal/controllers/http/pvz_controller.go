@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,6 +27,7 @@ type PvzController interface {
 
 type pvzController struct {
 	service service.Service
+	logger *slog.Logger
 }
 
 func NewPVZController(service service.Service) PvzController {
@@ -61,7 +63,7 @@ func (p *pvzController) CloseLastReception(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, converter.FromDomainReceptionToCloseReseptionREsp(reception))
+	c.JSON(http.StatusOK, converter.FromDomainReceptionToCloseReseptionResp(reception))
 }
 
 

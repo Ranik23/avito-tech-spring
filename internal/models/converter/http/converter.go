@@ -36,7 +36,7 @@ func FromDomainPVZToCreatePvzResp(pvz *domain.Pvz) *dto.CreatePvzResp {
 }
 
 
-func FromDomainReceptionToCloseReseptionREsp(reception *domain.Reception) *dto.CloseReceptionResp {
+func FromDomainReceptionToCloseReseptionResp(reception *domain.Reception) *dto.CloseReceptionResp {
 	return &dto.CloseReceptionResp{
 		DateTime: reception.DateTime.String(),
 		Id: reception.ID,

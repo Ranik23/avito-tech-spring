@@ -11,6 +11,6 @@ type RegisterReq struct {
 
 type RegisterResp struct {
 	Email 	string		`json:"email"`
-	Id		string		`json:"id,omitempty"`
+	Id		string		`json:"id"`
 	Role	string		`json:"role"`
 }
