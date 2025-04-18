@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
@@ -11,7 +10,7 @@ import (
 )
 
 type ProductRepository interface {
-	CreateProduct(ctx context.Context, productType string, receptionID string) (productID string, err error)
+	CreateProduct(ctx context.Context, productType string, receptionID string) (*domain.Product, error)
 	DeleteProduct(ctx context.Context, productID string) error
 	FindTheLastProduct(ctx context.Context, pvzID string) (product *domain.Product, err error)
 	GetProducts(ctx context.Context, receptionID string) ([]domain.Product, error)
@@ -21,12 +20,14 @@ type postgresProductRepository struct {
 	ctxManager manager.CtxManager
 }
 
-func NewPostgresProductRepository() ProductRepository {
-	return &postgresProductRepository{}
+func NewPostgresProductRepository(manager manager.CtxManager) ProductRepository {
+	return &postgresProductRepository{
+		ctxManager: manager,
+	}
 }
 
 
-func (p *postgresProductRepository) CreateProduct(ctx context.Context, productType string, receptionID string) (productID string, err error) {
+func (p *postgresProductRepository) CreateProduct(ctx context.Context, productType string, receptionID string) (*domain.Product, error) {
 	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
@@ -37,19 +38,20 @@ func (p *postgresProductRepository) CreateProduct(ctx context.Context, productTy
 		Insert("product").
 		Columns("type", "reception_id").
 		Values(productType, receptionID).
-		Suffix("RETURNING id").
+		Suffix("RETURNING id, type, reception_id, date_time").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var id int
+	var product domain.Product
 
-	err = exec.QueryRow(ctx, query, args...).Scan(&id)
+	err = exec.QueryRow(ctx, query, args...).Scan(&product.ID, &product.Type,
+					&product.ReceptionID, &product.DateTime)
 	
-	return strconv.Itoa(id), err
+	return &product, err
 }
 
 

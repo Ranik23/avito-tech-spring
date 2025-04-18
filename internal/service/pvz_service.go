@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
@@ -13,35 +14,49 @@ import (
 )
 
 type PVZService interface {
-	CreatePVZ(ctx context.Context, city string) (pvzID string, err error)
+	CreatePVZ(ctx context.Context, city string) (*domain.Pvz, error)
+
 	GetPVZSInfo(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error)
-	AddProduct(ctx context.Context, pvzID string, product_type string) (productID string, err error)
+	GetPVZList(ctx context.Context) ([]domain.Pvz, error)
+
+	AddProduct(ctx context.Context, pvzID string, product_type string) (*domain.Product, error)
 	DeleteLastProduct(ctx context.Context, pvzID string) error
-	StartReception(ctx context.Context, pvzID string) (receptionID string, err error)
-	CloseReception(ctx context.Context, pvzID string) (receptionID string, err error)
+
+	StartReception(ctx context.Context, pvzID string) (*domain.Reception, error)
+	CloseReception(ctx context.Context, pvzID string) (*domain.Reception, error)
 }
 
 type pvzService struct {
-	logger *slog.Logger
-	pvzRepo repository.PvzRepository
+	logger        *slog.Logger
+	pvzRepo       repository.PvzRepository
 	receptionRepo repository.ReceptionRepository
-	productRepo repository.ProductRepository
-	txManager manager.TxManager
+	productRepo   repository.ProductRepository
+	txManager     manager.TxManager
+	cities        []string
 }
 
-func NewPVZService(pvzRepo repository.PvzRepository, receptionRepo repository.ReceptionRepository,
-					productRepo repository.ProductRepository, manager manager.TxManager, logger *slog.Logger) PVZService {
+// GetPVZList implements PVZService.
+func (p *pvzService) GetPVZList(ctx context.Context) ([]domain.Pvz, error) {
+	return p.pvzRepo.GetListPVZ(ctx)
+}
+
+func NewPVZService(pvzRepo repository.PvzRepository, receptionRepo repository.ReceptionRepository, cities []string,
+	productRepo repository.ProductRepository, manager manager.TxManager, logger *slog.Logger) PVZService {
 	return &pvzService{
-		logger: logger,
-		pvzRepo: pvzRepo,
+		logger:        logger,
+		pvzRepo:       pvzRepo,
 		receptionRepo: receptionRepo,
-		productRepo: productRepo,
-		txManager: manager,
+		productRepo:   productRepo,
+		txManager:     manager,
+		cities:        cities,
 	}
 }
 
-func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType string) (productID string, err error) {
-	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType string) (*domain.Product, error) {
+
+	var product *domain.Product
+
+	err := p.txManager.Do(ctx, func(txCtx context.Context) error {
 		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
 		if err != nil {
 			return errs.Wrap("failed to find the open reception", err)
@@ -51,60 +66,71 @@ func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType s
 			return ErrAllReceptionsClosed
 		}
 
-		productID, err = p.productRepo.CreateProduct(txCtx, productType, reception.ID)
+		product, err = p.productRepo.CreateProduct(txCtx, productType, reception.ID)
 		if err != nil {
 			return errs.Wrap("failed to create the product", err)
 		}
 
 		return nil
 	})
-	
+
 	if err != nil {
 		p.logger.Error("Failed to add the product to the open reception",
-				slog.String("error", err.Error()),
-				slog.String("pvzID", pvzID),
-				slog.String("productType", productType))
+			slog.String("error", err.Error()),
+			slog.String("pvzID", pvzID),
+			slog.String("productType", productType))
 
-		return "", err
+		return nil, err
 	}
 
-	return productID, nil
+	return product, nil
 }
 
-func (p *pvzService) CloseReception(ctx context.Context, pvzID string) (receptionID string, err error) {
-	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+func (p *pvzService) CloseReception(ctx context.Context, pvzID string) (*domain.Reception, error) {
+
+	var receptionToReturn *domain.Reception
+
+	err := p.txManager.Do(ctx, func(txCtx context.Context) error {
 		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
 		if err != nil {
 			return errs.Wrap("failed to find the open", err)
 		}
 
 		if reception == nil {
-			return ErrNotFound
+			return ErrAllReceptionsClosed
 		}
-	
+
 		err = p.receptionRepo.UpdateReceptionStatus(txCtx, reception.ID, "Closed")
 		if err != nil {
 			return errs.Wrap("failed to updata the status", err)
 		}
-	
-		receptionID = reception.ID
+
+		receptionToReturn = reception
 		return nil
 	})
-	
+
 	if err != nil {
 		p.logger.Error("Failed to close the reception",
-				slog.String("error", err.Error()), 
-				slog.String("pvzID", pvzID))
+			slog.String("error", err.Error()),
+			slog.String("pvzID", pvzID))
 
-		return "", err
+		return nil, err
 	}
 
-	return receptionID, nil
+	return receptionToReturn, nil
 }
 
-func (p *pvzService) CreatePVZ(ctx context.Context, city string) (pvzID string, err error) {
-	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
-		pvzID, err = p.pvzRepo.CreatePVZ(txCtx, city)
+func (p *pvzService) CreatePVZ(ctx context.Context, city string) (*domain.Pvz, error) {
+	if !slices.Contains(p.cities, city) {
+		return nil, ErrInvalidCity
+	}
+
+	var pvz *domain.Pvz
+
+	err := p.txManager.Do(ctx, func(txCtx context.Context) error {
+		var err error
+
+		pvz, err = p.pvzRepo.CreatePVZ(txCtx, city)
 		if err != nil {
 			if errors.Is(err, repository.ErrAlreadyExists) {
 				return ErrAlreadyExists
@@ -113,16 +139,15 @@ func (p *pvzService) CreatePVZ(ctx context.Context, city string) (pvzID string, 
 		}
 		return nil
 	})
-
 	if err != nil {
 		p.logger.Error("Failed to do the transaction CreatePvz",
-					slog.String("error", err.Error()),
-					slog.String("city", city))
+			slog.String("error", err.Error()),
+			slog.String("city", city))
 
-		return "", err
+		return nil, err
 	}
 
-	return pvzID, nil
+	return pvz, nil
 }
 
 func (p *pvzService) DeleteLastProduct(ctx context.Context, pvzID string) error {
@@ -139,7 +164,7 @@ func (p *pvzService) DeleteLastProduct(ctx context.Context, pvzID string) error 
 		lastProduct, err := p.productRepo.FindTheLastProduct(txCtx, pvzID)
 		if err != nil {
 			if errors.Is(err, repository.ErrNotFound) {
-				return ErrEmpty
+				return ErrReceptionEmpty
 			}
 			return errs.Wrap("failed to find the last product", err)
 		}
@@ -153,9 +178,9 @@ func (p *pvzService) DeleteLastProduct(ctx context.Context, pvzID string) error 
 	})
 
 	if err != nil {
-		p.logger.Error("Failed to delete the last product", 
-				slog.String("error", err.Error()),
-				slog.String("pvzID", pvzID))
+		p.logger.Error("Failed to delete the last product",
+			slog.String("error", err.Error()),
+			slog.String("pvzID", pvzID))
 
 		return err
 	}
@@ -189,12 +214,12 @@ func (p *pvzService) GetPVZSInfo(ctx context.Context, start time.Time, end time.
 
 				receptionsInfo = append(receptionsInfo, domain.ReceptionInfo{
 					Reception: *reception,
-					Products: products,
+					Products:  products,
 				})
 			}
 
 			pvZsInfo = append(pvZsInfo, domain.PvzInfo{
-				Pvz: pvz,
+				Pvz:        pvz,
 				Receptions: receptionsInfo,
 			})
 		}
@@ -203,7 +228,7 @@ func (p *pvzService) GetPVZSInfo(ctx context.Context, start time.Time, end time.
 	})
 	if err != nil {
 		p.logger.Error("Failed to get PVZS info",
-				slog.String("error", err.Error()))
+			slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -211,18 +236,21 @@ func (p *pvzService) GetPVZSInfo(ctx context.Context, start time.Time, end time.
 }
 
 // StartReception implements PVZService.
-func (p *pvzService) StartReception(ctx context.Context, pvzID string) (receptionID string, err error) {
-	err = p.txManager.Do(ctx, func(txCtx context.Context) error {
+func (p *pvzService) StartReception(ctx context.Context, pvzID string) (*domain.Reception, error) {
+
+	var receptionToReturn *domain.Reception
+
+	err := p.txManager.Do(ctx, func(txCtx context.Context) error {
 		reception, err := p.receptionRepo.FindOpen(txCtx, pvzID)
 		if err != nil {
 			return errs.Wrap("find open reception", err)
 		}
 
 		if reception != nil {
-			return ErrAlreadyOpen 
+			return ErrAlreadyOpen
 		}
 
-		receptionID, err = p.receptionRepo.CreateReception(txCtx, pvzID)
+		receptionToReturn, err = p.receptionRepo.CreateReception(txCtx, pvzID)
 		if err != nil {
 			return errs.Wrap("create reception", err)
 		}
@@ -235,10 +263,8 @@ func (p *pvzService) StartReception(ctx context.Context, pvzID string) (receptio
 			slog.String("error", err.Error()),
 			slog.String("pvzID", pvzID))
 
-		return "", err
+		return nil, err
 	}
 
-	return receptionID, nil
+	return receptionToReturn, nil
 }
-
-

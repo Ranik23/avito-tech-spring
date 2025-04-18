@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
@@ -11,23 +10,63 @@ import (
 )
 
 type PvzRepository interface {
-	CreatePVZ(ctx context.Context, city string) (pvzID string, err error)
+	CreatePVZ(ctx context.Context, city string) (*domain.Pvz, error)
 	GetPVZS(ctx context.Context, offset int, limit int) ([]domain.Pvz, error)
 	GetPVZ(ctx context.Context, id string) (*domain.Pvz, error)
+	GetListPVZ(ctx context.Context) ([]domain.Pvz, error)
 }
 
 type postgresPvzRepository struct {
-	сtxManager manager.CtxManager
+	ctxManager manager.CtxManager
 }
 
-func NewPostgresPvzRepository() PvzRepository {
-	return &postgresPvzRepository{}
+func NewPostgresPvzRepository(manager manager.CtxManager) PvzRepository {
+	return &postgresPvzRepository{
+		ctxManager: manager,
+	}
 }
+
+func (p *postgresPvzRepository) GetListPVZ(ctx context.Context) ([]domain.Pvz, error) {
+	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
+	if tr == nil {
+		tr = p.ctxManager.Default(ctx)
+	}
+
+	query, args, err := squirrel.
+		Select("*").
+		From("pvz").
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	exec := tr.(pgx.Tx)
+
+	rows, err := exec.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []domain.Pvz
+	for rows.Next() {
+		var pvz domain.Pvz
+		err = rows.Scan(&pvz.ID, &pvz.RegistrationDate, &pvz.City)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, pvz)
+	}
+
+	return result, nil
+}
+
 
 func (p *postgresPvzRepository) GetPVZ(ctx context.Context, id string) (*domain.Pvz, error) {
-	tr := p.сtxManager.ByKey(ctx, p.сtxManager.CtxKey())
+	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
 	if tr == nil {
-		tr = p.сtxManager.Default(ctx)
+		tr = p.ctxManager.Default(ctx)
 	}
 	exec := tr.(pgx.Tx)
 
@@ -50,11 +89,10 @@ func (p *postgresPvzRepository) GetPVZ(ctx context.Context, id string) (*domain.
 	return &pvz, nil
 }
 
-
 func (p *postgresPvzRepository) GetPVZS(ctx context.Context, offset int, limit int) ([]domain.Pvz, error) {
-	tr := p.сtxManager.ByKey(ctx, p.сtxManager.CtxKey())
+	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
 	if tr == nil {
-		tr = p.сtxManager.Default(ctx)
+		tr = p.ctxManager.Default(ctx)
 	}
 	exec := tr.(pgx.Tx)
 
@@ -89,10 +127,10 @@ func (p *postgresPvzRepository) GetPVZS(ctx context.Context, offset int, limit i
 	return result, nil
 }
 
-func (p *postgresPvzRepository) CreatePVZ(ctx context.Context, city string) (pvzID string, err error) {
-	tr := p.сtxManager.ByKey(ctx, p.сtxManager.CtxKey())
+func (p *postgresPvzRepository) CreatePVZ(ctx context.Context, city string) (*domain.Pvz, error) {
+	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
 	if tr == nil {
-		tr = p.сtxManager.Default(ctx)
+		tr = p.ctxManager.Default(ctx)
 	}
 	exec := tr.(pgx.Tx)
 
@@ -100,19 +138,20 @@ func (p *postgresPvzRepository) CreatePVZ(ctx context.Context, city string) (pvz
 		Insert("pvz").
 		Columns("city").
 		Values(city).
-		Suffix("RETURNING id").
+		Suffix("RETURNING id, city, registration_date").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var id int
-	err = exec.QueryRow(ctx, query, args...).Scan(&id)
+	var pvz domain.Pvz
+
+	err = exec.QueryRow(ctx, query, args...).Scan(&pvz.ID, &pvz.City, &pvz.RegistrationDate)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return strconv.Itoa(id), nil
+	return &pvz, nil
 }
-

@@ -1,24 +1,24 @@
 package config
 
 import (
-	"log"
-
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
 
 
-type Config struct {
-
+type Config struct {           
+	HTTPServer   HTTPServerConfig   `yaml:"http"`
+	GRPCServer   GRPCServerConfig   `yaml:"grpc"`
+	Storage      StorageConfig      `yaml:"storage"`
+	SecretKey    string				`yaml:"secret"`
+	Cities		 []string			`yaml"cities"`
 }
-
-
 
 func LoadConfig(configPath, envPath string) (*Config, error) {
 	err := godotenv.Load(envPath)
 	if err != nil {
-		log.Fatalf("WARNING: error loading .env file from %s: %v\n", envPath, err)
+		return nil, err
 	}
 
 	viper.SetConfigName("config")
@@ -32,9 +32,8 @@ func LoadConfig(configPath, envPath string) (*Config, error) {
 
 	viper.AutomaticEnv()
 
-	viper.BindEnv("storage.postgres.hosts", "DB_HOST")
-	viper.BindEnv("storage.postgres.password", "DB_PASSWORD")
-	viper.BindEnv("jwt.secret_key", "JWT_SECRET_KEY")
+	viper.BindEnv("storage.host", "DB_HOST") //nolint
+	viper.BindEnv("storage.password", "DB_PASSWORD") //nolint
 
 	var config Config
 	err = viper.Unmarshal(&config)

@@ -53,7 +53,7 @@ func (a *authService) Login(ctx context.Context, email string, password string) 
 		}
 
 		if user == nil {
-			return ErrNotFound
+			return ErrUserNotFound
 		}
 
 		if !a.hasher.Equal(user.PasswordHash, password) {

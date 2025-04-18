@@ -12,11 +12,25 @@ var (
 	ErrNoPVZFound = errors.New("no pvz found")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrInvalidRole = errors.New("invalid role")
+	ErrInvalidCity = errors.New("invalid city")
+	ErrUserNotFound = errors.New("user not found")
+	ErrReceptionEmpty = errors.New("reception is empty")
 )
-
-
 
 type Service interface {
 	AuthService
 	PVZService
+}
+
+type service struct {
+	AuthService
+	PVZService
+}
+
+
+func NewService(authService AuthService, pvzService PVZService) Service {
+	return &service{
+		AuthService: authService,
+		PVZService: pvzService,
+	}
 }

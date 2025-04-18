@@ -1,0 +1,13 @@
+HTTPServer:
+  Host: "0.0.0.0"
+  Port: "8080"
+
+GRPCServer:
+  Host: "0.0.0.0"
+  Port: "9090"
+
+Storage:
+  Host: "0.0.0.0"
+  Port: "5432"
+  Database: "avito"
+  User: "postgres"

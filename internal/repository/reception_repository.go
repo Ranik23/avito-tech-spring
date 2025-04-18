@@ -14,7 +14,7 @@ import (
 
 type ReceptionRepository interface {
 	FindOpen(ctx context.Context, pvzID string) (*domain.Reception, error)
-	CreateReception(ctx context.Context, pvzID string) (receptionID string, err error)
+	CreateReception(ctx context.Context, pvzID string) (*domain.Reception, error)
 	UpdateReceptionStatus(ctx context.Context, receptionID string, newStatus string) error
 	GetReceptionsFiltered(ctx context.Context, pvzID string, startTime time.Time, endTime time.Time) ([]*domain.Reception, error)
 }
@@ -23,8 +23,15 @@ type postgresReceptionRepository struct {
 	ctxManager manager.CtxManager
 }
 
+
+func NewPostgresReceptionRepository(manager manager.CtxManager) ReceptionRepository {
+	return &postgresReceptionRepository{
+		ctxManager: manager,
+	}
+}
+
 // CreateReception implements ReceptionRepository.
-func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID string) (receptionID string, err error) {
+func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID string) (*domain.Reception, error) {
 	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
@@ -35,20 +42,21 @@ func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID
 		Insert("reception").
 		Columns("pvz_id", "status").
 		Values(pvzID, "open").
-		Suffix("RETURNING id").
+		Suffix("RETURNING id, pvz_id, status, date_time").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var id int
-	err = exec.QueryRow(ctx, query, args...).Scan(&id)
+	var reception domain.Reception
+
+	err = exec.QueryRow(ctx, query, args...).Scan(&reception.ID, &reception.PvzID, &reception.Status, &reception.DateTime)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return strconv.Itoa(id), nil
+	return &reception, nil
 }
 
 func (p *postgresReceptionRepository) FindOpen(ctx context.Context, pvzID string) (*domain.Reception, error) {
@@ -146,9 +154,4 @@ func (p *postgresReceptionRepository) UpdateReceptionStatus(ctx context.Context,
 
 	_, err = exec.Exec(ctx, query, args...)
 	return err
-}
-
-
-func NewPostgresReceptionRepository() ReceptionRepository {
-	return &postgresReceptionRepository{}
 }

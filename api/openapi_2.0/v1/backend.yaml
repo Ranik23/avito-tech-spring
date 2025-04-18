@@ -33,6 +33,10 @@ paths:
           description: Неверный запрос
           schema:
             $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/Error'
       summary: Получение тестового токена
   /login:
     post:
@@ -60,8 +64,16 @@ paths:
           description: Успешная авторизация
           schema:
             $ref: '#/definitions/Token'
+        '400':
+          description: Неверный запрос
+          schema:
+            $ref: '#/definitions/Error'
         '401':
           description: Неверные учетные данные
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/Error'
       summary: Авторизация пользователя
@@ -101,6 +113,10 @@ paths:
             $ref: '#/definitions/Error'
         '403':
           description: Доступ запрещен
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/Error'
       security:
@@ -159,6 +175,14 @@ paths:
                   type: array
               type: object
             type: array
+        '500':
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/Error'
+        '400':
+          description: Неверный запрос
+          schema:
+            $ref: '#/definitions/Error'
       security:
         - bearerAuth: []
       summary: Получение списка ПВЗ с фильтрацией по дате приемки и пагинацией
@@ -184,6 +208,10 @@ paths:
             $ref: '#/definitions/Error'
         '403':
           description: Доступ запрещен
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/Error'
       security:
@@ -212,6 +240,10 @@ paths:
           description: Доступ запрещен
           schema:
             $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/Error'
       security:
         - bearerAuth: []
       summary: Закрытие последней открытой приемки товаров в рамках ПВЗ
@@ -234,6 +266,10 @@ paths:
             $ref: '#/definitions/Error'
         '403':
           description: Доступ запрещен
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/Error'
       security:
@@ -270,6 +306,10 @@ paths:
             $ref: '#/definitions/Error'
         '403':
           description: Доступ запрещен
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/Error'
       security:
@@ -309,6 +349,10 @@ paths:
             $ref: '#/definitions/User'
         '400':
           description: Неверный запрос
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/Error'
       summary: Регистрация пользователя
@@ -404,4 +448,3 @@ securityDefinitions:
     name: Authorization
     type: apiKey
 x-components: {}
-

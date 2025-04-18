@@ -1,3 +1,5 @@
+//go:build unit
+
 package service
 
 import (
@@ -23,6 +25,7 @@ func TestCreatePVZ_Success(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	ctx := context.Background()
 	city := "Moscow"
@@ -35,7 +38,7 @@ func TestCreatePVZ_Success(t *testing.T) {
 		},
 	).Times(1)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	pvzID, err := pvzService.CreatePVZ(ctx, city)
 
@@ -51,6 +54,7 @@ func TestCreatePVZ_AlreadyExists(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	ctx := context.Background()
 	city := "Moscow"
@@ -62,7 +66,7 @@ func TestCreatePVZ_AlreadyExists(t *testing.T) {
 		},
 	).Times(1)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	pvzID, err := pvzService.CreatePVZ(ctx, city)
 
@@ -79,6 +83,7 @@ func TestPVZService_CloseReception(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	ctx := context.Background()
 	pvzID := "pvz456"
@@ -91,7 +96,7 @@ func TestPVZService_CloseReception(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	id, err := pvzService.CloseReception(ctx, pvzID)
 	assert.Equal(t, err, ErrNotFound) 
@@ -106,6 +111,7 @@ func TestPVZService_DeleteLastProductFail(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz456"
@@ -121,7 +127,7 @@ func TestPVZService_DeleteLastProductFail(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo,cities, mockProductRepo, mockTxManager, slog.Default())
 
 	err := pvzService.DeleteLastProduct(exampleCtx, examplePvzID)
 	assert.Equal(t, err, ErrEmpty) 
@@ -136,6 +142,7 @@ func TestPVZService_DeleteLastProductSucces(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz456"
@@ -155,7 +162,7 @@ func TestPVZService_DeleteLastProductSucces(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	err := pvzService.DeleteLastProduct(exampleCtx, examplePvzID)
 	assert.NoError(t, err)
@@ -169,6 +176,7 @@ func TestPVZService_DeleteLastProductNoOpen(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz456"
@@ -181,7 +189,7 @@ func TestPVZService_DeleteLastProductNoOpen(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	err := pvzService.DeleteLastProduct(exampleCtx, examplePvzID)
 	assert.Equal(t, err, ErrAllReceptionsClosed)
@@ -195,6 +203,7 @@ func TestPVZService_StartReception_Success(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz456"
@@ -211,7 +220,7 @@ func TestPVZService_StartReception_Success(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	receptionID, err := pvzService.StartReception(exampleCtx, examplePvzID)
 	assert.NoError(t, err)
@@ -227,6 +236,7 @@ func TestPVZService_StartReception_AlreadyOpen(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz456"
@@ -242,7 +252,7 @@ func TestPVZService_StartReception_AlreadyOpen(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	receptionID, err := pvzService.StartReception(exampleCtx, examplePvzID)
 	assert.Error(t, err)
@@ -259,6 +269,7 @@ func TestPVZService_AddProduct_Success(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz123"
@@ -275,7 +286,7 @@ func TestPVZService_AddProduct_Success(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	productID, err := pvzService.AddProduct(exampleCtx, examplePvzID, exampleProductType)
 	assert.NoError(t, err)
@@ -292,6 +303,7 @@ func TestPVZService_AddProduct_AllReceptionsClosed(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz789"
@@ -305,7 +317,7 @@ func TestPVZService_AddProduct_AllReceptionsClosed(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	productID, err := pvzService.AddProduct(exampleCtx, examplePvzID, exampleProductType)
 	assert.Error(t, err)
@@ -322,6 +334,7 @@ func TestPVZService_AddProduct_AllReceptionsFail(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	exampleCtx := context.Background()
 	examplePvzID := "pvz789"
@@ -337,7 +350,7 @@ func TestPVZService_AddProduct_AllReceptionsFail(t *testing.T) {
 		},
 	)
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	_, err := pvzService.AddProduct(exampleCtx, examplePvzID, exampleProductType)
 	assert.Error(t, err)
@@ -351,6 +364,7 @@ func TestPVZService_GetPVZSInfo_Success(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	ctx := context.Background()
 	start := time.Now().Add(-24 * time.Hour)
@@ -372,7 +386,7 @@ func TestPVZService_GetPVZSInfo_Success(t *testing.T) {
 		return fn(ctx)
 	})
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	pvzInfos, err := pvzService.GetPVZSInfo(ctx, start, end, offset, limit)
 	assert.NoError(t, err)
@@ -392,6 +406,7 @@ func TestPVZService_GetPVZSInfo_PartialByOffsetLimit(t *testing.T) {
 	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
 	mockProductRepo := repomock.NewMockProductRepository(ctrl)
 	mockTxManager := managermock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
 
 	ctx := context.Background()
 	start := time.Now().Add(-48 * time.Hour)
@@ -417,7 +432,7 @@ func TestPVZService_GetPVZSInfo_PartialByOffsetLimit(t *testing.T) {
 		return fn(ctx)
 	})
 
-	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, mockProductRepo, mockTxManager, slog.Default())
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
 
 	pvzInfos, err := pvzService.GetPVZSInfo(ctx, start, end, offset, limit)
 	assert.NoError(t, err)
