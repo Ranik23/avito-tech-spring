@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/Ranik23/avito-tech-spring/internal/config"
 	grpccontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/grpc"
@@ -16,6 +17,7 @@ import (
 	grpcserver "github.com/Ranik23/avito-tech-spring/pkg/grpc-server"
 	httpserver "github.com/Ranik23/avito-tech-spring/pkg/http-server"
 	"github.com/gin-gonic/gin"
+	"github.com/lmittmann/tint"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -30,7 +32,8 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	logger := slog.Default()
+	logger := slog.New(tint.NewHandler(os.Stdout, nil))
+	
 	logger.Info("Loading configuration...")
 
 	cfg, err := config.LoadConfig("config/", ".env")
@@ -52,10 +55,10 @@ func NewApp() (*App, error) {
 	txManager := postgresql.NewTxManager(pool, logger, ctxManager)
 
 	logger.Info("Initializing repositories...")
-	userRepo := postgresql.NewPostgresUserRepository(ctxManager)
-	productRepo := postgresql.NewPostgresProductRepository(ctxManager)
-	pvzRepo := postgresql.NewPostgresPvzRepository(ctxManager)
-	receptionRepo := postgresql.NewPostgresReceptionRepository(ctxManager)
+	userRepo := postgresql.NewPostgresUserRepository(ctxManager, logger)
+	productRepo := postgresql.NewPostgresProductRepository(ctxManager, logger)
+	pvzRepo := postgresql.NewPostgresPvzRepository(ctxManager, logger)
+	receptionRepo := postgresql.NewPostgresReceptionRepository(ctxManager, logger)
 
 	logger.Info("Initializing services...")
 	tokenService := token.NewToken(cfg.SecretKey)

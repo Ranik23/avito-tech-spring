@@ -105,6 +105,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/lmittmann/tint v1.0.7
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pressly/goose/v3 v3.24.2
 	github.com/rogpeppe/go-internal v1.14.1 // indirect

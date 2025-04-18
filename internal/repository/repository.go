@@ -6,6 +6,8 @@ import (
 
 var (
 	ErrAlreadyExists = errors.New("already exists")
+	ErrNoUserFound = errors.New("no user found")
+	ErrNoReceptionFound = errors.New("no reception found")
 	ErrNotFound = errors.New("not found")
 )
 
