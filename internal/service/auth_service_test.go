@@ -290,7 +290,7 @@ func TestDummyLogin_Success(t *testing.T) {
 
 	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
 
-	mockToken.EXPECT().GenerateToken("dummy", role).Return(expectedToken, nil).Times(1)
+	mockToken.EXPECT().GenerateToken("dummyRandomID", role).Return(expectedToken, nil).Times(1)
 
 	token, err := authService.DummyLogin(context.Background(), role)
 
@@ -331,7 +331,7 @@ func TestDummyLogin_TokenGenerationFails(t *testing.T) {
 
 	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
 
-	mockToken.EXPECT().GenerateToken("dummy", role).Return("", assert.AnError).Times(1)
+	mockToken.EXPECT().GenerateToken("dummyRandomID", role).Return("", assert.AnError).Times(1)
 
 	token, err := authService.DummyLogin(context.Background(), role)
 

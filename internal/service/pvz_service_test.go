@@ -120,7 +120,7 @@ func TestCreatePVZ_AlreadyExists(t *testing.T) {
 	assert.ErrorIs(t, err, ErrAlreadyExists)
 }
 
-func TestPVZService_CloseReception(t *testing.T) {
+func TestPVZService_CloseReceptionFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -145,6 +145,42 @@ func TestPVZService_CloseReception(t *testing.T) {
 
 	_, err := pvzService.CloseReception(ctx, pvzID)
 	assert.Equal(t, err, ErrAllReceptionsClosed)
+}
+
+func TestPVZService_CloseReceptionSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockPVZRepo := repomock.NewMockPvzRepository(ctrl)
+	mockReceptionRepo := repomock.NewMockReceptionRepository(ctrl)
+	mockProductRepo := repomock.NewMockProductRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	cities := []string{"Moscow"}
+
+	ctx := context.Background()
+	examplepvzID := "pvz456"
+	exampleReception := &domain.Reception{
+		ID: "1",
+		Status: "open",
+		PvzID: examplepvzID,
+	}
+
+	mockReceptionRepo.EXPECT().FindOpen(gomock.Any(), examplepvzID).Return(exampleReception, nil)
+	mockReceptionRepo.EXPECT().UpdateReceptionStatus(gomock.Any(), exampleReception.ID, "closed").Return(nil)
+
+	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+		func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		},
+	)
+
+	pvzService := NewPVZService(mockPVZRepo, mockReceptionRepo, cities, mockProductRepo, mockTxManager, slog.Default())
+
+	reception, err := pvzService.CloseReception(ctx, examplepvzID)
+	require.NoError(t, err)
+	require.Equal(t, reception.ID, "1")
+	require.Equal(t, reception.PvzID, examplepvzID)
+	require.Equal(t, reception.Status, "open")
 }
 
 func TestPVZService_DeleteLastProductFail(t *testing.T) {
@@ -195,11 +231,11 @@ func TestPVZService_DeleteLastProductSucces(t *testing.T) {
 
 	exampleReception := domain.Reception{}
 
-	mockReceptionRepo.EXPECT().FindOpen(gomock.Any(), examplePvzID).Return(&exampleReception, nil)
-	mockProductRepo.EXPECT().FindTheLastProduct(gomock.Any(), examplePvzID).Return(exampleProduct, nil)
-	mockProductRepo.EXPECT().DeleteProduct(gomock.Any(), exampleProduct.ID).Return(nil)
+	mockReceptionRepo.EXPECT().FindOpen(exampleCtx, examplePvzID).Return(&exampleReception, nil)
+	mockProductRepo.EXPECT().FindTheLastProduct(exampleCtx, examplePvzID).Return(exampleProduct, nil)
+	mockProductRepo.EXPECT().DeleteProduct(exampleCtx, exampleProduct.ID).Return(nil)
 
-	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+	mockTxManager.EXPECT().Do(exampleCtx, gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
 			return fn(ctx)
 		},
