@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,7 +27,6 @@ type PvzController interface {
 
 type pvzController struct {
 	service service.Service
-	logger *slog.Logger
 }
 
 func NewPVZController(service service.Service) PvzController {
@@ -308,4 +306,6 @@ func (p *pvzController) check(c *gin.Context, allowedRoles ...string) bool {
 
 	return false
 }
+
+
 

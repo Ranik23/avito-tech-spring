@@ -42,5 +42,3 @@ func (s *TestSuite) TestLoginUserNotFound() {
 	_, err := s.service.Login(context.Background(), "ghost@example.com", "whatever")
 	s.Require().ErrorIs(err, service.ErrUserNotFound)
 }
-
-
