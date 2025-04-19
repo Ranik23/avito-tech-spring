@@ -1,7 +1,6 @@
 package http
 
 import (
-	"context"
 	"errors"
 	"log/slog"
 
@@ -41,7 +40,7 @@ func (a *authController) DummyLogin(c *gin.Context) {
 
 	a.logger.Info("DummyLogin request received", slog.String("role", req.Role))
 
-	token, err := a.service.DummyLogin(context.TODO(), req.Role)
+	token, err := a.service.DummyLogin(c, req.Role)
 	if err != nil {
 		a.logger.Error("DummyLogin service error", slog.String("error", err.Error()))
 		c.JSON(500, dto.Error{
@@ -69,7 +68,7 @@ func (a *authController) Login(c *gin.Context) {
 
 	a.logger.Info("Login request received", slog.String("email", req.Email))
 
-	token, err := a.service.Login(context.TODO(), req.Email, req.Password)
+	token, err := a.service.Login(c, req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			a.logger.Warn("Invalid credentials", slog.String("email", req.Email))
@@ -105,7 +104,7 @@ func (a *authController) Register(c *gin.Context) {
 
 	a.logger.Info("Register request received", slog.String("email", req.Email), slog.String("role", req.Role))
 
-	userID, err := a.service.Register(context.TODO(), req.Email, req.Password, req.Role)
+	userID, err := a.service.Register(c, req.Email, req.Password, req.Role)
 	if err != nil {
 		a.logger.Error("Register service error", slog.String("error", err.Error()))
 		c.JSON(500, dto.Error{

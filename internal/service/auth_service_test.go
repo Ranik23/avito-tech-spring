@@ -17,7 +17,6 @@ import (
 
 var fn func(ctx context.Context) error
 
-
 func TestLogin_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -54,6 +53,41 @@ func TestLogin_Success(t *testing.T) {
 	assert.Equal(t, expectedToken, token)
 }
 
+func TestLogin_TokenGenerationFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := repomock.NewMockUserRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	mockToken := tokenmock.NewMockToken(ctrl)
+	mockHasher := hashermock.NewMockHasher(ctrl)
+
+	email := "test@example.com"
+	password := "password"
+	user := &domain.User{
+		ID:           "userID123",
+		Email:        email,
+		PasswordHash: "hashedPassword",
+		Role:         "Client",
+	}
+
+	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
+
+	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(user, nil).Times(1)
+	mockHasher.EXPECT().Equal(user.PasswordHash, password).Return(true).Times(1)
+	mockToken.EXPECT().GenerateToken(user.ID, user.Role).Return("token", assert.AnError).Times(1)
+	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+		func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		},
+	)
+
+	token, err := authService.Login(context.Background(), email, password)
+
+	assert.Error(t, err)
+	assert.Empty(t, token)
+}
+
 func TestLogin_UserNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -70,7 +104,6 @@ func TestLogin_UserNotFound(t *testing.T) {
 
 	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(nil, nil).Times(1)
 
-
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
 			return fn(ctx)
@@ -79,7 +112,6 @@ func TestLogin_UserNotFound(t *testing.T) {
 
 	token, err := authService.Login(context.Background(), email, password)
 
-	// Assertions
 	assert.Error(t, err)
 	assert.Equal(t, ErrUserNotFound, err)
 	assert.Empty(t, token)
@@ -107,7 +139,6 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 
 	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(user, nil).Times(1)
 	mockHasher.EXPECT().Equal(user.PasswordHash, password).Return(false).Times(1)
-
 
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
@@ -153,6 +184,65 @@ func TestRegister_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, userID, id)
+}
+
+func TestRegister_HashFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := repomock.NewMockUserRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	mockToken := tokenmock.NewMockToken(ctrl)
+	mockHasher := hashermock.NewMockHasher(ctrl)
+
+	email := "test@example.com"
+	password := "password"
+	role := "Client"
+
+	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
+
+	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(nil, nil).Times(1)
+	mockHasher.EXPECT().Hash(password).Return("", assert.AnError).Times(1)
+	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+		func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		},
+	)
+	id, err := authService.Register(context.Background(), email, password, role)
+
+	assert.Error(t, err)
+	assert.Empty(t, id)
+}
+
+func TestRegister_CreateUserFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := repomock.NewMockUserRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	mockToken := tokenmock.NewMockToken(ctrl)
+	mockHasher := hashermock.NewMockHasher(ctrl)
+
+	email := "test@example.com"
+	password := "password"
+	role := "Client"
+	hashedPassword := "hashedPassword"
+
+	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
+
+	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(nil, nil).Times(1)
+	mockHasher.EXPECT().Hash(password).Return(hashedPassword, nil).Times(1)
+	mockUserRepo.EXPECT().CreateUser(gomock.Any(), email, hashedPassword, role).Return("", assert.AnError).Times(1)
+	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+		func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		},
+	)
+
+	id, err := authService.Register(context.Background(), email, password, role)
+
+	assert.Error(t, err)
+	assert.Empty(t, id)
 }
 
 func TestRegister_UserAlreadyExists(t *testing.T) {
@@ -226,4 +316,80 @@ func TestDummyLogin_InvalidRole(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrInvalidRole, err)
 	assert.Empty(t, token)
+}
+
+func TestDummyLogin_TokenGenerationFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := repomock.NewMockUserRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	mockToken := tokenmock.NewMockToken(ctrl)
+	mockHasher := hashermock.NewMockHasher(ctrl)
+
+	role := "Moderator"
+
+	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
+
+	mockToken.EXPECT().GenerateToken("dummy", role).Return("", assert.AnError).Times(1)
+
+	token, err := authService.DummyLogin(context.Background(), role)
+
+	assert.Error(t, err)
+	assert.Empty(t, token)
+}
+
+func TestLogin_GetUserFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := repomock.NewMockUserRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	mockToken := tokenmock.NewMockToken(ctrl)
+	mockHasher := hashermock.NewMockHasher(ctrl)
+
+	email := "test@example.com"
+	password := "password"
+
+	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
+
+	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(nil, assert.AnError).Times(1)
+	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+		func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		},
+	)
+
+	token, err := authService.Login(context.Background(), email, password)
+
+	assert.Error(t, err)
+	assert.Empty(t, token)
+}
+
+func TestRegister_GetUserFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := repomock.NewMockUserRepository(ctrl)
+	mockTxManager := repomock.NewMockTxManager(ctrl)
+	mockToken := tokenmock.NewMockToken(ctrl)
+	mockHasher := hashermock.NewMockHasher(ctrl)
+
+	email := "test@example.com"
+	password := "password"
+	role := "Client"
+
+	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
+
+	mockUserRepo.EXPECT().GetUser(gomock.Any(), email).Return(nil, assert.AnError).Times(1)
+	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+		func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		},
+	)
+
+	id, err := authService.Register(context.Background(), email, password, role)
+
+	assert.Error(t, err)
+	assert.Empty(t, id)
 }

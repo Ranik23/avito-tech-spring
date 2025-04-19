@@ -27,6 +27,7 @@ func (pvz *PVZServer) GetPVZList(ctx context.Context, req *pvz_v1.GetPVZListRequ
 	if err != nil {
 		return nil, err
 	}
+	
 	grpcPVZs := grpc.FromDomainPvzListToGRPCList(pvzs)
 
 	return &pvz_v1.GetPVZListResponse{

@@ -49,7 +49,7 @@ func NewPVZService(pvzRepo repository.PvzRepository, receptionRepo repository.Re
 func (p *pvzService) GetPVZList(ctx context.Context) ([]domain.Pvz, error) {
 	pvzs, err := p.pvzRepo.GetListPVZ(ctx)
 	if err != nil {
-		p.logger.Error("Failed to get PVZ list")
+		p.logger.Error("Failed to get PVZ list", slog.String("error", err.Error()))
 		return nil, err
 	}
 	return pvzs, nil

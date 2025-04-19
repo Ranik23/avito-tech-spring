@@ -28,6 +28,6 @@ func SetUpRoutes(router *gin.Engine, authController http.AuthController, pvzCont
 		group.POST("/pvz/:pvzId/delete_last_product", pvzController.DeleteLastProduct)
 		group.POST("/pvz/:pvzId/close_last_reception", pvzController.CloseLastReception)
 		group.GET("/pvz", pvzController.GetPvzInfo)
-		//group.GET("/pvz/optimized", pvzController.GetPvzsInfoOptimized)
+		group.GET("/pvz/optimized", pvzController.GetPvzInfoOptimized)
 	}
 }

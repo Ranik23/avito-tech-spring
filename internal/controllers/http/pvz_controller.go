@@ -19,6 +19,7 @@ import (
 type PvzController interface {
 	CreatePvz(c *gin.Context)
 	GetPvzInfo(c *gin.Context)
+	GetPvzInfoOptimized(c *gin.Context)
 	CloseLastReception(c *gin.Context)
 	DeleteLastProduct(c *gin.Context)
 	CreateReception(c *gin.Context)
@@ -79,7 +80,7 @@ func (p *pvzController) AddProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := p.service.AddProduct(context.TODO(), req.PvzID, req.Type)
+	product, err := p.service.AddProduct(c, req.PvzID, req.Type)
 	if err != nil {
 		if errors.Is(err, service.ErrAllReceptionsClosed) {
 			c.JSON(http.StatusBadRequest, dto.Error{Message: err.Error()})
@@ -126,7 +127,7 @@ func (p *pvzController) DeleteLastProduct(c *gin.Context) {
 		return
 	}
 
-	if err := p.service.DeleteLastProduct(context.TODO(), pvzID); err != nil {
+	if err := p.service.DeleteLastProduct(c, pvzID); err != nil {
 		if errors.Is(err, service.ErrAllReceptionsClosed) || errors.Is(err, service.ErrReceptionEmpty) {
 			c.JSON(http.StatusBadRequest, dto.Error{Message: err.Error()})
 			return
@@ -154,7 +155,7 @@ func (p *pvzController) CreatePvz(c *gin.Context) {
 		return
 	}
 
-	pvz, err := p.service.CreatePVZ(context.TODO(), req.City)
+	pvz, err := p.service.CreatePVZ(c, req.City)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.Error{Message: err.Error()})
 		return
@@ -163,7 +164,54 @@ func (p *pvzController) CreatePvz(c *gin.Context) {
 	c.JSON(http.StatusCreated, converter.FromDomainPVZToCreatePvzResp(pvz))
 }
 
+func (p *pvzController) GetPvzInfoOptimized(c *gin.Context) {
+	if !p.check(c, "employee", "moderator") {
+		return
+	}
 
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, dto.Error{
+			Message: err.Error(),
+		})
+		return
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 || limit > 30 {
+		c.JSON(http.StatusBadRequest, dto.Error{
+			Message: err.Error(),
+		})
+		return
+	}
+
+	startDate, ok := p.parseTimeParam(c, "startDate")
+	if !ok {
+		c.JSON(http.StatusBadRequest, dto.Error{
+			Message: "failed to get startDate",
+		})
+		return
+	}
+
+	endDate, ok := p.parseTimeParam(c, "endDate")
+	if !ok {
+		c.JSON(http.StatusBadRequest, dto.Error{
+			Message: "failed to get endDate",
+		})
+		return
+	}
+
+	_, err = p.service.GetPVZSInfoOptimized(c, startDate, endDate, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.Error{
+			Message: err.Error(),
+		})
+		return
+	}
+}
 
 func (p *pvzController) GetPvzInfo(c *gin.Context) {
 	if !p.check(c, "employee", "moderator") {
@@ -205,7 +253,7 @@ func (p *pvzController) GetPvzInfo(c *gin.Context) {
 		return
 	}
 
-	_, err = p.service.GetPVZSInfo(context.TODO(), startDate, endDate, page, limit)
+	_, err = p.service.GetPVZSInfo(c, startDate, endDate, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.Error{
 			Message: err.Error(),
