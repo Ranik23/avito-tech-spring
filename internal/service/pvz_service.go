@@ -15,6 +15,7 @@ type PVZService interface {
 	CreatePVZ(ctx context.Context, city string) (*domain.Pvz, error)
 
 	GetPVZSInfo(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error)
+	GetPVZSInfoOptimized(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error)
 	GetPVZList(ctx context.Context) ([]domain.Pvz, error)
 
 	AddProduct(ctx context.Context, pvzID string, productType string) (*domain.Product, error)
@@ -45,10 +46,19 @@ func NewPVZService(pvzRepo repository.PvzRepository, receptionRepo repository.Re
 	}
 }
 
-// GetPVZList implements PVZService.
 func (p *pvzService) GetPVZList(ctx context.Context) ([]domain.Pvz, error) {
-	return p.pvzRepo.GetListPVZ(ctx)
+	pvzs, err := p.pvzRepo.GetListPVZ(ctx)
+	if err != nil {
+		p.logger.Error("Failed to get PVZ list")
+		return nil, err
+	}
+	return pvzs, nil
 }
+
+func (p *pvzService) GetPVZSInfoOptimized(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error) {
+	panic("unimplemented")
+}
+
 
 func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType string) (*domain.Product, error) {
 	var product *domain.Product
@@ -215,7 +225,6 @@ func (p *pvzService) GetPVZSInfo(ctx context.Context, start time.Time, end time.
 						slog.String("error", err.Error()))
 					return err
 				}
-
 				receptionsInfo = append(receptionsInfo, domain.ReceptionInfo{
 					Reception: *reception,
 					Products:  products,
