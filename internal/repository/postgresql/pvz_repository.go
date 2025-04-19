@@ -22,7 +22,7 @@ func NewPostgresPvzRepository(manager repository.CtxManager, logger *slog.Logger
 	}
 }
 
-func (p *postgresPvzRepository) GetListPVZ(ctx context.Context) ([]domain.Pvz, error) {
+func (p *postgresPvzRepository) GetListOfPVZS(ctx context.Context) ([]domain.Pvz, error) {
 	tr := p.ctxManager.ByKey(ctx, p.ctxManager.CtxKey())
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
@@ -36,14 +36,14 @@ func (p *postgresPvzRepository) GetListPVZ(ctx context.Context) ([]domain.Pvz, e
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for GetListPVZ",
+		p.logger.Error("Failed to build SQL query for GetListOfPVZS",
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	rows, err := exec.Query(ctx, query, args...)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for GetListPVZ",
+		p.logger.Error("Failed to execute SQL query for GetListOfPVZS",
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (p *postgresPvzRepository) GetListPVZ(ctx context.Context) ([]domain.Pvz, e
 		var pvz domain.Pvz
 		err = rows.Scan(&pvz.ID, &pvz.RegistrationDate, &pvz.City)
 		if err != nil {
-			p.logger.Error("Failed to scan row in GetListPVZ",
+			p.logger.Error("Failed to scan row in GetListOfPVZS",
 				slog.String("error", err.Error()))
 			return nil, err
 		}

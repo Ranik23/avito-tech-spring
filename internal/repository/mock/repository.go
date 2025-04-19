@@ -115,19 +115,19 @@ func (mr *MockRepositoryMockRecorder) FindTheLastProduct(ctx, pvzID any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindTheLastProduct", reflect.TypeOf((*MockRepository)(nil).FindTheLastProduct), ctx, pvzID)
 }
 
-// GetListPVZ mocks base method.
-func (m *MockRepository) GetListPVZ(ctx context.Context) ([]domain.Pvz, error) {
+// GetListOfPVZS mocks base method.
+func (m *MockRepository) GetListOfPVZS(ctx context.Context) ([]domain.Pvz, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetListPVZ", ctx)
+	ret := m.ctrl.Call(m, "GetListOfPVZS", ctx)
 	ret0, _ := ret[0].([]domain.Pvz)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetListPVZ indicates an expected call of GetListPVZ.
-func (mr *MockRepositoryMockRecorder) GetListPVZ(ctx any) *gomock.Call {
+// GetListOfPVZS indicates an expected call of GetListOfPVZS.
+func (mr *MockRepositoryMockRecorder) GetListOfPVZS(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetListPVZ", reflect.TypeOf((*MockRepository)(nil).GetListPVZ), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetListOfPVZS", reflect.TypeOf((*MockRepository)(nil).GetListOfPVZS), ctx)
 }
 
 // GetPVZ mocks base method.

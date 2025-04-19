@@ -94,7 +94,6 @@ func TestCloseLastReception(t *testing.T) {
 	}
 }
 
-
 func TestAddProduct(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -164,8 +163,6 @@ func TestAddProduct(t *testing.T) {
 	}
 }
 
-
-
 func TestCreateReception(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -234,7 +231,6 @@ func TestCreateReception(t *testing.T) {
 		})
 	}
 }
-
 
 func TestDeleteLastProduct(t *testing.T) {
 	ctrl := gomock.NewController(t)
