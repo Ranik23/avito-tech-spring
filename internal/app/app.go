@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	gen "github.com/Ranik23/avito-tech-spring/api/proto/gen/pvz_v1"
 	"github.com/Ranik23/avito-tech-spring/internal/config"
 	grpccontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/grpc"
 	httpcontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lmittmann/tint"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 )
 
 type App struct {
@@ -95,7 +97,11 @@ func NewApp() (*App, error) {
 	httpServer := httpserver.New(logger, httpServerConfig, router)
 
 	logger.Info("Creating GRPC server...")
-	grpcServer := grpcserver.New(logger, grpcServerConfig, grpcServerImpl)
+	
+	grpcServer := grpc.NewServer()
+	gen.RegisterPVZServiceServer(grpcServer, grpcServerImpl)
+
+	grpcSrv := grpcserver.New(logger, grpcServerConfig, grpcServer)
 
 
 	logger.Info("App initialization complete")
@@ -105,7 +111,7 @@ func NewApp() (*App, error) {
 		logger:     logger,
 		cfg:        cfg,
 		httpServer: httpServer,
-		grcpServer: grpcServer,
+		grcpServer: grpcSrv,
 	}, nil
 }
 

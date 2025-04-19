@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	gen "github.com/Ranik23/avito-tech-spring/api/proto/gen/pvz_v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
@@ -30,15 +29,11 @@ type Config struct {
 }
 
 // убрать srv gen.PVZServiceServer и поставить что-то более общее
-func New(logger *slog.Logger,  cfg *Config, srv gen.PVZServiceServer) *Server {
-	grpcServer := grpc.NewServer()
-
-	gen.RegisterPVZServiceServer(grpcServer, srv)
-
+func New(logger *slog.Logger, config *Config, server *grpc.Server) *Server {
 	return &Server{
-		server: grpcServer,
+		server: server,
 		logger: logger,
-		config: cfg,
+		config: config,
 	}
 }
 

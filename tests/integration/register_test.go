@@ -11,7 +11,6 @@ import (
 
 
 func (s *TestSuite) RegisterSuccess() {
-
 	exampleEmail := "lol"
 	exampleRole := "lol"
 	examplePassword := "employee"
