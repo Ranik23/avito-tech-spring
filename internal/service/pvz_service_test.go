@@ -120,7 +120,7 @@ func TestPVZService_DeleteLastProductFail(t *testing.T) {
 	exampleReception := domain.Reception{}
 
 	mockReceptionRepo.EXPECT().FindOpen(gomock.Any(), examplePvzID).Return(&exampleReception, nil)
-	mockProductRepo.EXPECT().FindTheLastProduct(gomock.Any(), examplePvzID).Return(nil, repository.ErrNotFound)
+	mockProductRepo.EXPECT().FindTheLastProduct(gomock.Any(), examplePvzID).Return(nil, nil)
 
 	mockTxManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
