@@ -8,12 +8,8 @@ import (
 )
 
 
-
-
-
-
-
-func SetUpRoutes(router *gin.Engine, authController http.AuthController, pvzController http.PvzController, tokenService token.Token) {
+func SetUpRoutes(router *gin.Engine, authController http.AuthController,
+					pvzController http.PvzController, tokenService token.Token) {
 
 	router.POST("/dummyLogin", authController.DummyLogin)
 	router.POST("/register", authController.Register)

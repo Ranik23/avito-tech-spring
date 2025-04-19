@@ -10,7 +10,7 @@ import (
 	gen "github.com/Ranik23/avito-tech-spring/api/proto/gen/pvz_v1"
 	"github.com/Ranik23/avito-tech-spring/internal/config"
 	grpccontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/grpc"
-	httpcontrollers "github.com/Ranik23/avito-tech-spring/internal/controllers/http"
+	httpcontroll "github.com/Ranik23/avito-tech-spring/internal/controllers/http"
 	"github.com/Ranik23/avito-tech-spring/internal/hasher"
 	"github.com/Ranik23/avito-tech-spring/internal/repository/postgresql"
 	"github.com/Ranik23/avito-tech-spring/internal/service"
@@ -64,15 +64,15 @@ func NewApp() (*App, error) {
 
 	logger.Info("Initializing services...")
 	tokenService := token.NewToken(cfg.SecretKey)
-	hasher := hasher.NewHasher()
+	passwordhasher := hasher.NewHasher()
 
-	authService := service.NewAuthService(userRepo, txManager, tokenService, hasher, logger)
+	authService := service.NewAuthService(userRepo, txManager, tokenService, passwordhasher, logger)
 	pvzService := service.NewPVZService(pvzRepo, receptionRepo, cfg.Cities, productRepo, txManager, logger)
 	service := service.NewService(authService, pvzService)
 
 	logger.Info("Initializing controllers...")
-	authController := httpcontrollers.NewAuthController(service, logger)
-	pvzController := httpcontrollers.NewPVZController(service)
+	authController := httpcontroll.NewAuthController(service, logger)
+	pvzController := httpcontroll.NewPVZController(service)
 
 	httpServerConfig := &httpserver.Config{
 		Port: cfg.HTTPServer.Port,
