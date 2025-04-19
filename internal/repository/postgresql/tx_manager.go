@@ -30,7 +30,9 @@ func (p *txManager) Do(ctx context.Context, fn func(context.Context) error) erro
 		return err
 	}
 
-	newCtx := context.WithValue(ctx, p.ctxManager.CtxKey(), tx)
+	newTx := NewTransaction(tx)
+
+	newCtx := context.WithValue(ctx, p.ctxManager.CtxKey(), newTx)
 
 	if err := fn(newCtx); err != nil {
 		rollBackErr := tx.Rollback(ctx)

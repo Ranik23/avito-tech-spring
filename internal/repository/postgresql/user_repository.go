@@ -30,7 +30,7 @@ func (p *postgresUserRepository) CreateUser(ctx context.Context, email string, h
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.Insert("users").
 		Columns("email", "hashed_password", "role").
@@ -40,9 +40,9 @@ func (p *postgresUserRepository) CreateUser(ctx context.Context, email string, h
 		ToSql()
 
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for creating user", 
-			slog.String("email", email), 
-			slog.String("role", role), 
+		p.logger.Error("Failed to build SQL query for creating user",
+			slog.String("email", email),
+			slog.String("role", role),
 			slog.String("error", err.Error()))
 		return "", err
 	}
@@ -50,16 +50,16 @@ func (p *postgresUserRepository) CreateUser(ctx context.Context, email string, h
 	var id int
 	err = exec.QueryRow(ctx, query, args...).Scan(&id)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for creating user", 
-			slog.String("email", email), 
-			slog.String("role", role), 
+		p.logger.Error("Failed to execute SQL query for creating user",
+			slog.String("email", email),
+			slog.String("role", role),
 			slog.String("error", err.Error()))
 		return "", err
 	}
 
-	p.logger.Info("Successfully created user", 
-		slog.String("email", email), 
-		slog.String("role", role), 
+	p.logger.Info("Successfully created user",
+		slog.String("email", email),
+		slog.String("role", role),
 		slog.Int("userID", id))
 
 	return strconv.Itoa(id), nil
@@ -71,36 +71,35 @@ func (p *postgresUserRepository) GetUser(ctx context.Context, email string) (*do
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
-	query, args, err := squirrel.Select("id, email, role, created_at").
+	query, args, err := squirrel.Select("id, email, hashed_password, role, created_at").
 		From("users").
 		Where(squirrel.Eq{"email": email}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for getting user", 
-			slog.String("email", email), 
+		p.logger.Error("Failed to build SQL query for getting user",
+			slog.String("email", email),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	var user domain.User
-	err = exec.QueryRow(ctx, query, args...).Scan(&user.ID, &user.Email, &user.Role, &user.CreatedAt)
+	err = exec.QueryRow(ctx, query, args...).Scan(&user.ID, &user.Email,&user.PasswordHash,  &user.Role, &user.CreatedAt)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for getting user", 
-			slog.String("email", email), 
+		p.logger.Error("Failed to execute SQL query for getting user",
+			slog.String("email", email),
 			slog.String("error", err.Error()))
-
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	p.logger.Info("Successfully retrieved user", 
-		slog.String("email", email), 
+	p.logger.Info("Successfully retrieved user",
+		slog.String("email", email),
 		slog.String("userID", user.ID))
 
 	return &user, nil

@@ -28,7 +28,8 @@ func (p *postgresProductRepository) CreateProduct(ctx context.Context, productTy
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Insert("product").
@@ -39,9 +40,9 @@ func (p *postgresProductRepository) CreateProduct(ctx context.Context, productTy
 		ToSql()
 
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for CreateProduct", 
-			slog.String("product_type", productType), 
-			slog.String("reception_id", receptionID), 
+		p.logger.Error("Failed to build SQL query for CreateProduct",
+			slog.String("product_type", productType),
+			slog.String("reception_id", receptionID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -49,17 +50,17 @@ func (p *postgresProductRepository) CreateProduct(ctx context.Context, productTy
 	var product domain.Product
 	err = exec.QueryRow(ctx, query, args...).Scan(&product.ID, &product.Type, &product.ReceptionID, &product.DateTime)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for CreateProduct", 
-			slog.String("product_type", productType), 
-			slog.String("reception_id", receptionID), 
+		p.logger.Error("Failed to execute SQL query for CreateProduct",
+			slog.String("product_type", productType),
+			slog.String("reception_id", receptionID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
-	p.logger.Info("Successfully created product", 
-		slog.String("id", product.ID), 
-		slog.String("type", product.Type), 
-		slog.String("reception_id", product.ReceptionID), 
+	p.logger.Info("Successfully created product",
+		slog.String("id", product.ID),
+		slog.String("type", product.Type),
+		slog.String("reception_id", product.ReceptionID),
 		slog.Time("date_time", product.DateTime))
 
 	return &product, nil
@@ -70,7 +71,8 @@ func (p *postgresProductRepository) DeleteProduct(ctx context.Context, productID
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Delete("product").
@@ -78,21 +80,21 @@ func (p *postgresProductRepository) DeleteProduct(ctx context.Context, productID
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for DeleteProduct", 
-			slog.String("product_id", productID), 
+		p.logger.Error("Failed to build SQL query for DeleteProduct",
+			slog.String("product_id", productID),
 			slog.String("error", err.Error()))
 		return err
 	}
 
 	_, err = exec.Exec(ctx, query, args...)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for DeleteProduct", 
-			slog.String("product_id", productID), 
+		p.logger.Error("Failed to execute SQL query for DeleteProduct",
+			slog.String("product_id", productID),
 			slog.String("error", err.Error()))
 		return err
 	}
 
-	p.logger.Info("Successfully deleted product", 
+	p.logger.Info("Successfully deleted product",
 		slog.String("product_id", productID))
 
 	return nil
@@ -103,12 +105,12 @@ func (p *postgresProductRepository) FindTheLastProduct(ctx context.Context, pvzI
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
-		Select("id", "date_time", "type", "reception_id").
+		Select("product.id", "product.date_time", "type", "reception_id").
 		From("product").
-		Join("reception on product.reception_id = reception_id").
+		Join("reception on product.reception_id = reception.id").
 		Where(squirrel.Eq{"reception.pvz_id": pvzID}).
 		OrderBy("date_time DESC").
 		Limit(1).
@@ -116,8 +118,8 @@ func (p *postgresProductRepository) FindTheLastProduct(ctx context.Context, pvzI
 		ToSql()
 
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for FindTheLastProduct", 
-			slog.String("pvz_id", pvzID), 
+		p.logger.Error("Failed to build SQL query for FindTheLastProduct",
+			slog.String("pvz_id", pvzID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -125,20 +127,20 @@ func (p *postgresProductRepository) FindTheLastProduct(ctx context.Context, pvzI
 	var prod domain.Product
 	err = exec.QueryRow(ctx, query, args...).Scan(&prod.ID, &prod.DateTime, &prod.Type, &prod.ReceptionID)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for FindTheLastProduct", 
-			slog.String("pvz_id", pvzID), 
+		p.logger.Error("Failed to execute SQL query for FindTheLastProduct",
+			slog.String("pvz_id", pvzID),
 			slog.String("error", err.Error()))
-			
+
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	p.logger.Info("Successfully retrieved last product", 
-		slog.String("id", prod.ID), 
-		slog.String("type", prod.Type), 
-		slog.String("reception_id", prod.ReceptionID), 
+	p.logger.Info("Successfully retrieved last product",
+		slog.String("id", prod.ID),
+		slog.String("type", prod.Type),
+		slog.String("reception_id", prod.ReceptionID),
 		slog.Time("date_time", prod.DateTime))
 
 	return &prod, nil
@@ -149,7 +151,7 @@ func (p *postgresProductRepository) GetProducts(ctx context.Context, receptionID
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "date_time", "type", "reception_id").
@@ -159,16 +161,16 @@ func (p *postgresProductRepository) GetProducts(ctx context.Context, receptionID
 		ToSql()
 
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for GetProducts", 
-			slog.String("reception_id", receptionID), 
+		p.logger.Error("Failed to build SQL query for GetProducts",
+			slog.String("reception_id", receptionID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	rows, err := exec.Query(ctx, query, args...)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for GetProducts", 
-			slog.String("reception_id", receptionID), 
+		p.logger.Error("Failed to execute SQL query for GetProducts",
+			slog.String("reception_id", receptionID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -178,16 +180,16 @@ func (p *postgresProductRepository) GetProducts(ctx context.Context, receptionID
 	for rows.Next() {
 		var prod domain.Product
 		if err := rows.Scan(&prod.ID, &prod.DateTime, &prod.Type, &prod.ReceptionID); err != nil {
-			p.logger.Error("Failed to scan row in GetProducts", 
-				slog.String("reception_id", receptionID), 
+			p.logger.Error("Failed to scan row in GetProducts",
+				slog.String("reception_id", receptionID),
 				slog.String("error", err.Error()))
 			return nil, err
 		}
 		products = append(products, prod)
 	}
 
-	p.logger.Info("Successfully retrieved list of products", 
-		slog.Int("count", len(products)), 
+	p.logger.Info("Successfully retrieved list of products",
+		slog.Int("count", len(products)),
 		slog.String("reception_id", receptionID))
 
 	return products, nil

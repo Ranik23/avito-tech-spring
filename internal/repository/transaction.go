@@ -9,4 +9,5 @@ import (
 type Transaction interface {
     Commit(context.Context) error 
     Rollback(context.Context) error 
+    Transaction() interface{}
 }

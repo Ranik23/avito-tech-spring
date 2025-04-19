@@ -59,6 +59,11 @@ func (a *authService) Login(ctx context.Context, email string, password string) 
 			return ErrUserNotFound
 		}
 
+		a.logger.Info("User Found", slog.String("email", email))
+
+		a.logger.Info(string(user.PasswordHash))
+		a.logger.Info(password)
+
 		if !a.hasher.Equal(user.PasswordHash, password) {
 			a.logger.Warn("Invalid credentials during login",
 				slog.String("email", email),
@@ -157,7 +162,7 @@ func (a *authService) DummyLogin(ctx context.Context, role string) (token string
 		return "", ErrInvalidRole
 	}
 
-	token, err = a.token.GenerateToken("dummy", role)
+	token, err = a.token.GenerateToken("dummyRandomID", role)
 	if err != nil {
 		a.logger.Error("Dummy login failed: token generation error",
 			slog.String("role", role),

@@ -111,7 +111,7 @@ func (p *pvzService) CloseReception(ctx context.Context, pvzID string) (*domain.
 			return ErrAllReceptionsClosed
 		}
 
-		err = p.receptionRepo.UpdateReceptionStatus(txCtx, reception.ID, "Closed")
+		err = p.receptionRepo.UpdateReceptionStatus(txCtx, reception.ID, "closed")
 		if err != nil {
 			p.logger.Error("Failed to update the reception status", slog.String("pvzID", pvzID),
 				slog.String("error", err.Error()))

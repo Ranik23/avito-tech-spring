@@ -9,21 +9,26 @@ import (
 
 
 type postgresTransaction struct {
-	tx 	pgx.Tx
+	Tx 	pgx.Tx
 }
 
 
 func NewTransaction(tx pgx.Tx) repository.Transaction {
 	return &postgresTransaction{
-		tx: tx,
+		Tx: tx,
 	}
 }
 
+func (t *postgresTransaction) Transaction() interface{} {
+	return t.Tx
+}
+
+
 func (t *postgresTransaction) Commit(ctx context.Context) error {
-	return t.tx.Commit(ctx)
+	return t.Tx.Commit(ctx)
 }
 
 func (t *postgresTransaction) Rollback(ctx context.Context) error {
-	return t.tx.Rollback(ctx)
+	return t.Tx.Rollback(ctx)
 }
 

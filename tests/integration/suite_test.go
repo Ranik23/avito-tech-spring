@@ -43,7 +43,7 @@ func (s *TestSuite) SetupSuite() {
 
 	s.psqlContainer = psqlContainer
 
-	err = util.RunMigrations(psqlContainer.GetDSN(), "../../migrations")
+	err = util.RunMigrations(psqlContainer.GetDSN(), "../../migrations/goose")
 	s.Require().NoError(err)
 
 	poolConfig, err := pgxpool.ParseConfig(psqlContainer.GetDSN())
@@ -87,7 +87,7 @@ func (s *TestSuite) SetupTest() {
 	defer db.Close()
 
 	_, err = db.Exec(`
-        TRUNCATE TABLE users, links RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE users, reception, product, pvz RESTART IDENTITY CASCADE;
     `)
 	s.Require().NoError(err)
 }

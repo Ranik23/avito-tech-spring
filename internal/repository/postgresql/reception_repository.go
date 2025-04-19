@@ -31,7 +31,7 @@ func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Insert("reception").
@@ -41,8 +41,8 @@ func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for creating reception", 
-			slog.String("pvzID", pvzID), 
+		p.logger.Error("Failed to build SQL query for creating reception",
+			slog.String("pvzID", pvzID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -50,16 +50,16 @@ func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID
 	var reception domain.Reception
 	err = exec.QueryRow(ctx, query, args...).Scan(&reception.ID, &reception.PvzID, &reception.Status, &reception.DateTime)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for creating reception", 
-			slog.String("pvzID", pvzID), 
+		p.logger.Error("Failed to execute SQL query for creating reception",
+			slog.String("pvzID", pvzID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
-	p.logger.Info("Successfully created reception", 
-		slog.String("pvzID", pvzID), 
-		slog.String("receptionID", reception.ID), 
-		slog.String("status", reception.Status), 
+	p.logger.Info("Successfully created reception",
+		slog.String("pvzID", pvzID),
+		slog.String("receptionID", reception.ID),
+		slog.String("status", reception.Status),
 		slog.Time("date_time", reception.DateTime))
 
 	return &reception, nil
@@ -71,7 +71,7 @@ func (p *postgresReceptionRepository) FindOpen(ctx context.Context, pvzID string
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "date_time", "pvz_id", "status").
@@ -82,8 +82,8 @@ func (p *postgresReceptionRepository) FindOpen(ctx context.Context, pvzID string
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for finding open reception", 
-			slog.String("pvzID", pvzID), 
+		p.logger.Error("Failed to build SQL query for finding open reception",
+			slog.String("pvzID", pvzID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -92,20 +92,20 @@ func (p *postgresReceptionRepository) FindOpen(ctx context.Context, pvzID string
 	err = exec.QueryRow(ctx, query, args...).Scan(&r.ID, &r.DateTime, &r.PvzID, &r.Status)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			p.logger.Info("No open reception found", 
+			p.logger.Info("No open reception found",
 				slog.String("pvzID", pvzID))
 			return nil, nil
 		}
-		p.logger.Error("Failed to execute SQL query for finding open reception", 
-			slog.String("pvzID", pvzID), 
+		p.logger.Error("Failed to execute SQL query for finding open reception",
+			slog.String("pvzID", pvzID),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
-	p.logger.Info("Successfully found open reception", 
-		slog.String("pvzID", pvzID), 
-		slog.String("receptionID", r.ID), 
-		slog.String("status", r.Status), 
+	p.logger.Info("Successfully found open reception",
+		slog.String("pvzID", pvzID),
+		slog.String("receptionID", r.ID),
+		slog.String("status", r.Status),
 		slog.Time("date_time", r.DateTime))
 
 	return &r, nil
@@ -117,7 +117,7 @@ func (p *postgresReceptionRepository) GetReceptionsFiltered(ctx context.Context,
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "date_time", "pvz_id", "status").
@@ -131,20 +131,20 @@ func (p *postgresReceptionRepository) GetReceptionsFiltered(ctx context.Context,
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for getting filtered receptions", 
-			slog.String("pvzID", pvzID), 
-			slog.Time("startTime", startTime), 
-			slog.Time("endTime", endTime), 
+		p.logger.Error("Failed to build SQL query for getting filtered receptions",
+			slog.String("pvzID", pvzID),
+			slog.Time("startTime", startTime),
+			slog.Time("endTime", endTime),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	rows, err := exec.Query(ctx, query, args...)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for getting filtered receptions", 
-			slog.String("pvzID", pvzID), 
-			slog.Time("startTime", startTime), 
-			slog.Time("endTime", endTime), 
+		p.logger.Error("Failed to execute SQL query for getting filtered receptions",
+			slog.String("pvzID", pvzID),
+			slog.Time("startTime", startTime),
+			slog.Time("endTime", endTime),
 			slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -155,16 +155,16 @@ func (p *postgresReceptionRepository) GetReceptionsFiltered(ctx context.Context,
 		var r domain.Reception
 		err = rows.Scan(&r.ID, &r.DateTime, &r.PvzID, &r.Status)
 		if err != nil {
-			p.logger.Error("Failed to scan reception data", 
-				slog.String("pvzID", pvzID), 
+			p.logger.Error("Failed to scan reception data",
+				slog.String("pvzID", pvzID),
 				slog.String("error", err.Error()))
 			return nil, err
 		}
 		result = append(result, &r)
 	}
 
-	p.logger.Info("Successfully retrieved filtered receptions", 
-		slog.String("pvzID", pvzID), 
+	p.logger.Info("Successfully retrieved filtered receptions",
+		slog.String("pvzID", pvzID),
 		slog.Int("receptionsCount", len(result)))
 
 	return result, nil
@@ -176,12 +176,12 @@ func (p *postgresReceptionRepository) UpdateReceptionStatus(ctx context.Context,
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.(pgx.Tx)
+	exec := tr.Transaction().(pgx.Tx)
 
 	id, err := strconv.Atoi(receptionID)
 	if err != nil {
-		p.logger.Error("Failed to convert receptionID to int", 
-			slog.String("receptionID", receptionID), 
+		p.logger.Error("Failed to convert receptionID to int",
+			slog.String("receptionID", receptionID),
 			slog.String("error", err.Error()))
 		return err
 	}
@@ -193,24 +193,24 @@ func (p *postgresReceptionRepository) UpdateReceptionStatus(ctx context.Context,
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		p.logger.Error("Failed to build SQL query for updating reception status", 
-			slog.String("receptionID", receptionID), 
-			slog.String("newStatus", newStatus), 
+		p.logger.Error("Failed to build SQL query for updating reception status",
+			slog.String("receptionID", receptionID),
+			slog.String("newStatus", newStatus),
 			slog.String("error", err.Error()))
 		return err
 	}
 
 	_, err = exec.Exec(ctx, query, args...)
 	if err != nil {
-		p.logger.Error("Failed to execute SQL query for updating reception status", 
-			slog.String("receptionID", receptionID), 
-			slog.String("newStatus", newStatus), 
+		p.logger.Error("Failed to execute SQL query for updating reception status",
+			slog.String("receptionID", receptionID),
+			slog.String("newStatus", newStatus),
 			slog.String("error", err.Error()))
 		return err
 	}
 
-	p.logger.Info("Successfully updated reception status", 
-		slog.String("receptionID", receptionID), 
+	p.logger.Info("Successfully updated reception status",
+		slog.String("receptionID", receptionID),
 		slog.String("newStatus", newStatus))
 
 	return nil

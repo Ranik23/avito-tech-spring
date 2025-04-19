@@ -10,7 +10,7 @@ import (
 )
 
 
-func (s *TestSuite) RegisterSuccess() {
+func (s *TestSuite) TestRegisterSuccess() {
 	exampleEmail := "lol"
 	exampleRole := "lol"
 	examplePassword := "employee"
@@ -20,13 +20,14 @@ func (s *TestSuite) RegisterSuccess() {
 	
 
 	db, err := sql.Open("postgres", s.psqlContainer.GetDSN())
+	defer db.Close()
 	s.Require().NoError(err)
 
 
 	var user domain.User
 
 	err = db.QueryRow(`
-		SELECT * from users;
+		SELECT id, email, role from users;
 	`).Scan(&user.ID, &user.Email, &user.Role)
 	s.Require().NoError(err)
 

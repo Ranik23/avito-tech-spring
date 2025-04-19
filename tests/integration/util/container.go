@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"fmt"
+
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -77,6 +78,11 @@ func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
 	config.Host = host
 
 	fmt.Println("Host:", config.Host, config.MappedPort)
+
+	// if err := container.Start(context.Background()); err != nil {
+	// 	log.Fatalf("Failed to start")
+	// 	return nil, err
+	// }
 
 	return &PostgreSQLContainer{
 		Container: container,

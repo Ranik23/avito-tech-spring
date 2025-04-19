@@ -26,7 +26,6 @@ func (p *postgresCtxManager) ByKey(ctx context.Context, key repository.CtxKey) r
 	return tx
 }
 
-
 func (p *postgresCtxManager) Default(ctx context.Context) repository.Transaction {
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {
