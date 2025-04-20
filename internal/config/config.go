@@ -8,11 +8,12 @@ import (
 
 
 type Config struct {           
-	HTTPServer   HTTPServerConfig   `yaml:"HTTPServer"`
-	GRPCServer   GRPCServerConfig   `yaml:"GRPCServer"`
-	Storage      StorageConfig      `yaml:"Storage"`
-	SecretKey    string				`yaml:"-"`
-	Cities		 []string			`yaml:"Cities"`
+	HTTPServer   	HTTPServerConfig   	`yaml:"HTTPServer"`
+	GRPCServer   	GRPCServerConfig   	`yaml:"GRPCServer"`
+	GatewayServer 	GatewayServer		`yaml:"Gateway"`
+	Storage      	StorageConfig      	`yaml:"Storage"`
+	SecretKey    	string				`yaml:"-"`
+	Cities		 	[]string			`yaml:"Cities"`
 }
 
 func LoadConfig(configPath, envPath string) (*Config, error) {

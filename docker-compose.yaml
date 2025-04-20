@@ -1,6 +1,5 @@
 version: '3.8'
 
-
 services:
   app:
     build:
@@ -12,6 +11,8 @@ services:
       - my-network
     ports:
       - 8080:8080
+      - 6060:6060
+      - 9090:9090
     environment:
       - DB_HOST=postgresql
       - DB_PASSWORD=password
@@ -77,6 +78,19 @@ services:
       - SWAGGER_JSON=/foo/swagger.yaml
     networks:
       - my-network
+
+  swagger-ui-grpc:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui-grpc
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./api/proto/pvz.swagger.json:/foo/swagger.json
+    environment:
+      - SWAGGER_JSON=/foo/swagger.json
+    networks:
+      - my-network
+  
 
 networks:
   my-network:

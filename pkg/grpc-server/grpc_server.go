@@ -48,7 +48,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 		select{
 		case <-ctx.Done():
-			s.logger.Info("Context Cancelled")
+			s.logger.Error("Context Cancelled")
 		case <-sigCh:
 			s.logger.Info("Signal Detected!")
 		}

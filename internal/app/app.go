@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -19,23 +20,26 @@ import (
 	"github.com/Ranik23/avito-tech-spring/pkg/closure"
 	grpcserver "github.com/Ranik23/avito-tech-spring/pkg/grpc-server"
 	httpserver "github.com/Ranik23/avito-tech-spring/pkg/http-server"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/lmittmann/tint"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"github.com/gin-contrib/cors"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type App struct {
-	service 	service.Service
-	logger  	*slog.Logger
+	service 		service.Service
+	logger  		*slog.Logger
 
-	cfg 		*config.Config
+	cfg 			*config.Config
 
-	httpServer 	*httpserver.Server
-	grcpServer 	*grpcserver.Server
+	httpServer 		*httpserver.Server
+	grcpServer 		*grpcserver.Server
+	gatewayServer 	*httpserver.Server
 
-	closer 		*closure.Closer
+	closer 			*closure.Closer
 }
 
 func NewApp() (*App, error) {
@@ -54,8 +58,6 @@ func NewApp() (*App, error) {
 	}
 	logger.Info("Configuration loaded")
 
-	logger.Info("", slog.String("city", cfg.Cities[2]))
-
 	logger.Info("Connecting to database...")
 	pool, err := cfg.Storage.Connect()
 	if err != nil {
@@ -67,6 +69,8 @@ func NewApp() (*App, error) {
 		pool.Close()
 		return nil
 	})
+
+	config := NewCORSConfig()
 
 	logger.Info("Connected to database")
 
@@ -91,41 +95,86 @@ func NewApp() (*App, error) {
 	authController := httpcontroll.NewAuthController(service, logger)
 	pvzController := httpcontroll.NewPVZController(service, logger)
 
+
+
+
+
+	logger.Info("Creating Gateway Server")
+
+	gateWayConfig := &httpserver.Config{
+		Port: 		cfg.GatewayServer.Port,
+		Host: 		cfg.GatewayServer.Host,
+		StartMsg: 	"Hello, I am A Gateway Server",
+	}
+
+	ctx := context.Background()
+	mux := runtime.NewServeMux()
+
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+
+	grpcAddr := fmt.Sprintf("%s:%s", cfg.GRPCServer.Host, cfg.GRPCServer.Port)
+
+	err = gen.RegisterPVZServiceHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	if err != nil {
+		log.Printf("Failed to register gateway: %v", err)
+		return nil, err
+	}
+
+	gatewayServer := httpserver.New(logger, gateWayConfig, mux)
+
+	logger.Info("Gateway Server Created")
+
+
+
+
+
+	logger.Info("Creating HTTP server...")
+
 	httpServerConfig := &httpserver.Config{
-		Port: cfg.HTTPServer.Port,
-		Host: cfg.HTTPServer.Host,
-		StartMsg: "Hello, I Am A HTTP Server",
+		Port: 		cfg.HTTPServer.Port,
+		Host: 		cfg.HTTPServer.Host,
+		StartMsg: 	"Hello, I Am A HTTP Server",
 	}
-
-	grpcServerConfig := &grpcserver.Config{
-		Host: cfg.GRPCServer.Host,
-		Port: cfg.GRPCServer.Port,
-		StartMsg: "Hello, I Am A GRPC Server",
-	}
-
-	grpcServerImpl := grpccontrollers.NewPVZServer(service)
 
 	logger.Info("Setting up HTTP routes...")
 	router := gin.New()
-
-	config := NewCORSConfig()
 
 	router.Use(cors.New(config))
 
 	SetUpRoutes(router, authController, pvzController, tokenService)
 
-	logger.Info("Creating HTTP server...")
 	httpServer := httpserver.New(logger, httpServerConfig, router)
 
+	logger.Info("HTTP Server Created")
+
+
+
+
+
+
 	logger.Info("Creating GRPC server...")
+
+	grpcServerConfig := &grpcserver.Config{
+		Host: 		cfg.GRPCServer.Host,
+		Port: 		cfg.GRPCServer.Port,
+		StartMsg: 	"Hello, I Am A GRPC Server",
+	}
+
+	grpcServerImpl := grpccontrollers.NewPVZServer(service)
 	
 	grpcServer := grpc.NewServer()
 	gen.RegisterPVZServiceServer(grpcServer, grpcServerImpl)
 
 	grpcSrv := grpcserver.New(logger, grpcServerConfig, grpcServer)
 
-	logger.Info("App initialization complete")
+	logger.Info("GRCP Server Created")
 
+
+
+
+
+
+	logger.Info("App initialization complete")
 	return &App{
 		service:    service,
 		logger:     logger,
@@ -133,10 +182,11 @@ func NewApp() (*App, error) {
 		httpServer: httpServer,
 		grcpServer: grpcSrv,
 		closer: 	closer,
+		gatewayServer: gatewayServer,
 	}, nil
 }
 
-func (a *App) Start() error {
+func (a *App) Start(ctx context.Context) error {
 
 	defer func() {
 		if err := a.closer.Close(context.Background()); err != nil {
@@ -147,7 +197,15 @@ func (a *App) Start() error {
 	g, _ := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
-		if err := a.httpServer.Start(context.TODO()); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := a.gatewayServer.Start(ctx); err != nil && errors.Is(err, http.ErrServerClosed) {
+			a.logger.Error("Failed to start Gateway Server", slog.String("error", err.Error()))
+			return err
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		if err := a.httpServer.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.logger.Error("Failed to start HTTP server", slog.String("error", err.Error()))
 			return err
 		}
@@ -155,7 +213,7 @@ func (a *App) Start() error {
 	})
 
 	g.Go(func() error {
-		if err := a.grcpServer.Start(context.TODO()); err != nil {
+		if err := a.grcpServer.Start(ctx); err != nil {
 			a.logger.Error("Failed to start GRPC Server", slog.String("error", err.Error()))
 			return err
 		}
@@ -165,9 +223,10 @@ func (a *App) Start() error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	
+
 	a.logger.Info("HTTP Server Gracefully stopped")
 	a.logger.Info("GRPC Server Gracefully stopped")
+	a.logger.Info("Gateway Server Gracefully stopped")
 
 	
 	return nil
