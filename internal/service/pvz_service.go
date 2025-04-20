@@ -54,10 +54,6 @@ func (p *pvzService) GetPVZList(ctx context.Context) ([]domain.Pvz, error) {
 	return pvzs, nil
 }
 
-func (p *pvzService) GetPVZSInfoOptimized(ctx context.Context, start time.Time, end time.Time, offset int, limit int) ([]domain.PvzInfo, error) {
-	panic("unimplemented")
-}
-
 func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType string) (*domain.Product, error) {
 	var product *domain.Product
 
@@ -150,6 +146,8 @@ func (p *pvzService) CreatePVZ(ctx context.Context, city string) (*domain.Pvz, e
 		return nil
 	})
 	if err != nil {
+		p.logger.Error("Failed to CreatePVZ", slog.String("city", city),
+			slog.String("error", err.Error()))
 		return nil, err
 	}
 

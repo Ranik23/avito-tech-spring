@@ -285,7 +285,7 @@ func TestDummyLogin_Success(t *testing.T) {
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
-	role := "Client"
+	role := "employee"
 	expectedToken := "dummyToken"
 
 	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
@@ -327,7 +327,7 @@ func TestDummyLogin_TokenGenerationFails(t *testing.T) {
 	mockToken := tokenmock.NewMockToken(ctrl)
 	mockHasher := hashermock.NewMockHasher(ctrl)
 
-	role := "Moderator"
+	role := "moderator"
 
 	authService := NewAuthService(mockUserRepo, mockTxManager, mockToken, mockHasher, slog.Default())
 

@@ -1,8 +1,11 @@
+//go:build unit
+
 package http
 
 import (
 	"bytes"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -23,7 +26,7 @@ func TestCloseLastReception(t *testing.T) {
 	mockAuthService := mock.NewMockAuthService(ctrl)
 	mockPVZService := mock.NewMockPVZService(ctrl)
 	svc := service.NewService(mockAuthService, mockPVZService)
-	controller := NewPVZController(svc)
+	controller := NewPVZController(svc, slog.Default())
 
 	tests := []struct {
 		name           string
@@ -99,7 +102,7 @@ func TestAddProduct(t *testing.T) {
 	mockAuthService := mock.NewMockAuthService(ctrl)
 	mockPVZService := mock.NewMockPVZService(ctrl)
 	svc := service.NewService(mockAuthService, mockPVZService)
-	controller := NewPVZController(svc)
+	controller := NewPVZController(svc, slog.Default())
 
 	tests := []struct {
 		name           string
@@ -168,7 +171,7 @@ func TestCreateReception(t *testing.T) {
 	mockAuthService := mock.NewMockAuthService(ctrl)
 	mockPVZService := mock.NewMockPVZService(ctrl)
 	svc := service.NewService(mockAuthService, mockPVZService)
-	controller := NewPVZController(svc)
+	controller := NewPVZController(svc, slog.Default())
 
 	tests := []struct {
 		name           string
@@ -237,7 +240,7 @@ func TestDeleteLastProduct(t *testing.T) {
 	mockAuthService := mock.NewMockAuthService(ctrl)
 	mockPVZService := mock.NewMockPVZService(ctrl)
 	svc := service.NewService(mockAuthService, mockPVZService)
-	controller := NewPVZController(svc)
+	controller := NewPVZController(svc, slog.Default())
 
 	tests := []struct {
 		name           string
@@ -308,7 +311,7 @@ func TestCreatePvz(t *testing.T) {
 	mockAuthService := mock.NewMockAuthService(ctrl)
 
 	svc := service.NewService(mockAuthService, mockPVZService)
-	controller := NewPVZController(svc).(*pvzController)
+	controller := NewPVZController(svc, slog.Default())
 
 	tests := []struct {
 		name           string

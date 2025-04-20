@@ -14,10 +14,8 @@ import (
 )
 
 
-
-var fn func(ctx context.Context) error
-
 func (s *TestSuite) TestRollBackRegister() {
+
 	ctrl := gomock.NewController(s.T())
 
 	exampleError := errors.New("do error")

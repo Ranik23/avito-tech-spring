@@ -89,7 +89,7 @@ func NewApp() (*App, error) {
 
 	logger.Info("Initializing controllers...")
 	authController := httpcontroll.NewAuthController(service, logger)
-	pvzController := httpcontroll.NewPVZController(service)
+	pvzController := httpcontroll.NewPVZController(service, logger)
 
 	httpServerConfig := &httpserver.Config{
 		Port: cfg.HTTPServer.Port,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,11 +27,13 @@ type PvzController interface {
 
 type pvzController struct {
 	service service.Service
+	logger *slog.Logger
 }
 
-func NewPVZController(service service.Service) PvzController {
+func NewPVZController(service service.Service, logger *slog.Logger) PvzController {
 	return &pvzController{
 		service: service,
+		logger: logger,
 	}
 }
 
@@ -67,6 +70,7 @@ func (p *pvzController) CloseLastReception(c *gin.Context) {
 
 func (p *pvzController) AddProduct(c *gin.Context) {
 	if !p.check(c, "employee") {
+		p.logger.Error("Invalid role for AddProduct")
 		return
 	}
 

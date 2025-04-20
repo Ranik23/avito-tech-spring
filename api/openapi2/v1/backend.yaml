@@ -91,7 +91,6 @@ paths:
           schema:
             properties:
               pvzId:
-                format: uuid
                 type: string
               type:
                 enum:

@@ -18,40 +18,43 @@ const BASE_URL = 'http://localhost:8080';
 const HEADERS = { 'Content-Type': 'application/json' };
 
 export default function () {
-    const loginRes = http.post(`${BASE_URL}/dummyLogin`, JSON.stringify({ 
+    const loginResModerator = http.post(`${BASE_URL}/dummyLogin`, JSON.stringify({ 
         role: 'moderator' 
     }), {
         headers: HEADERS,
     });
 
-    check(loginRes, {
-        'dummyLogin 200': (r) => r.status === 200,
+    check(loginResModerator, {
+        'dummyLoginModerator 200': (r) => r.status === 200,
     });
 
-    const token = loginRes.json('token');
-    const authHeaders = {
+    const moderator_token = loginResModerator.json('token');
+    const authHeadersModerator = {
         ...HEADERS,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${moderator_token}`,
     };
 
     const pvzRes = http.post(`${BASE_URL}/pvz`, JSON.stringify({ city: 'Moscow' }), {
-        headers: authHeaders,
+        headers: authHeadersModerator,
     });
 
     check(pvzRes, {
         'CreatePVZ 201': (r) => r.status === 201 && r.json('city') === 'Moscow',
     });
 
-    const pvzId = pvzRes.json('id');
-
-    const productRes = http.post(`${BASE_URL}/products`, JSON.stringify({
-        pvzId: pvzId,
-        type: "box",
+    const loginResEmployee = http.post(`${BASE_URL}/dummyLogin`, JSON.stringify({
+        role: "employee"
     }), {
-        headers: authHeaders,
+        headers: HEADERS,
     });
 
-    check(productRes, {
-        'AddProduct 201': (r) => r.status === 201,
+    check(loginResEmployee, {
+        'dummyLoginEmployee 200': (r) => r.status === 200,
     });
+
+    const employee_token = loginResEmployee.json('token');
+    const authHeadersEmployee = {
+        ...HEADERS,
+        Authorization: `Bearer ${employee_token}`,
+    };
 }
