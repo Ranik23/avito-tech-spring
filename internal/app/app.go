@@ -54,6 +54,8 @@ func NewApp() (*App, error) {
 	}
 	logger.Info("Configuration loaded")
 
+	logger.Info("", slog.String("city", cfg.Cities[2]))
+
 	logger.Info("Connecting to database...")
 	pool, err := cfg.Storage.Connect()
 	if err != nil {
@@ -78,7 +80,7 @@ func NewApp() (*App, error) {
 	receptionRepo := postgresql.NewPostgresReceptionRepository(ctxManager, logger)
 
 	logger.Info("Initializing services...")
-	tokenService := token.NewToken(cfg.SecretKey)
+	tokenService := token.NewToken(cfg.SecretKey, logger)
 	passwordhasher := hasher.NewHasher()
 
 	authService := service.NewAuthService(userRepo, txManager, tokenService, passwordhasher, logger)
@@ -107,13 +109,13 @@ func NewApp() (*App, error) {
 	logger.Info("Setting up HTTP routes...")
 	router := gin.New()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8085"}, // Swagger UI
+		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-	
+
 	SetUpRoutes(router, authController, pvzController, tokenService)
 
 	logger.Info("Creating HTTP server...")

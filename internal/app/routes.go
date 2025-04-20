@@ -7,9 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func SetUpRoutes(router *gin.Engine, authController http.AuthController,
-					pvzController http.PvzController, tokenService token.Token) {
+	pvzController http.PvzController, tokenService token.Token) {
 
 	router.POST("/dummyLogin", authController.DummyLogin)
 	router.POST("/register", authController.Register)

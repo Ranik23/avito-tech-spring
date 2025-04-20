@@ -67,7 +67,7 @@ func (s *TestSuite) SetupSuite() {
 	pvzRepo := postgresql.NewPostgresPvzRepository(ctxManager, logger)
 
 
-	token := token.NewToken("lol")
+	token := token.NewToken("lol", logger)
 	hasher := hasher.NewHasher()
 
 	cities := []string{"Moscow"}

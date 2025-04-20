@@ -3,6 +3,7 @@
 package token
 
 import (
+	"log/slog"
 	"testing"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 func TestToken_GenerateAndParse_Success(t *testing.T) {
 	secret := "mysecret"
-	tk := NewToken(secret)
+	tk := NewToken(secret, slog.Default())
 
 	userID := "user123"
 	role := "Client"
@@ -32,10 +33,10 @@ func TestToken_Parse_InvalidSignature(t *testing.T) {
 	// Создаём токен с другим секретом
 	secret := "correct-secret"
 	wrongSecret := "wrong-secret"
-	tk := NewToken(secret)
+	tk := NewToken(secret, slog.Default())
 
 	// Токен подписан другим ключом
-	foreign := NewToken(wrongSecret)
+	foreign := NewToken(wrongSecret, slog.Default())
 	tokenStr, err := foreign.GenerateToken("user123", "Client")
 	assert.NoError(t, err)
 
@@ -56,7 +57,7 @@ func TestToken_Parse_InvalidMethod(t *testing.T) {
 	tokenStr, err := jwtToken.SignedString(jwt.UnsafeAllowNoneSignatureType)
 	assert.NoError(t, err)
 
-	tk := NewToken(secret)
+	tk := NewToken(secret, slog.Default())
 	parsedClaims, err := tk.Parse(tokenStr)
 	assert.Error(t, err)
 	assert.Nil(t, parsedClaims)
@@ -64,7 +65,7 @@ func TestToken_Parse_InvalidMethod(t *testing.T) {
 
 func TestToken_Parse_MalformedToken(t *testing.T) {
 	secret := "mysecret"
-	tk := NewToken(secret)
+	tk := NewToken(secret, slog.Default())
 
 	// Нарушаем формат токена
 	malformed := "this.is.not.a.jwt"
@@ -75,7 +76,7 @@ func TestToken_Parse_MalformedToken(t *testing.T) {
 }
 
 func TestToken_Parse_EmptyToken(t *testing.T) {
-	tk := NewToken("secret")
+	tk := NewToken("secret", slog.Default())
 
 	claims, err := tk.Parse("")
 	assert.Error(t, err)

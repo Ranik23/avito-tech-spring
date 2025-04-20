@@ -140,7 +140,6 @@ func (p *pvzController) DeleteLastProduct(c *gin.Context) {
 
 
 func (p *pvzController) CreatePvz(c *gin.Context) {
-	
 	if !p.check(c, "moderator") {
 		return
 	}
@@ -252,7 +251,7 @@ func (p *pvzController) check(c *gin.Context, allowedRoles ...string) bool {
 	}
 
 	c.AbortWithStatusJSON(http.StatusForbidden, dto.Error{
-		Message: "this role is forbidden",
+		Message: fmt.Sprintf("%s has no access", roleStr),
 	})
 
 	return false

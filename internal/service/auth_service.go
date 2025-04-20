@@ -61,9 +61,6 @@ func (a *authService) Login(ctx context.Context, email string, password string) 
 
 		a.logger.Info("User Found", slog.String("email", email))
 
-		a.logger.Info(string(user.PasswordHash))
-		a.logger.Info(password)
-
 		if !a.hasher.Equal(user.PasswordHash, password) {
 			a.logger.Warn("Invalid credentials during login",
 				slog.String("email", email),
