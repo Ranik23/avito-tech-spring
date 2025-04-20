@@ -15,7 +15,7 @@ type StorageConfig struct {
 	Name           	   string     `yaml:"-"`
 	Username           string     `yaml:"-"`
 	Password           string     `yaml:"-"`
-	SSLMode            string     `yaml:"-"`
+	SSLMode            string     `yaml:"ssl"`
 
 
 	MaxConnections    int 		  `yaml:"MaxConnections"`

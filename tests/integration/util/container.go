@@ -9,24 +9,24 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-type (
-	PostgreSQLContainer struct {
-		testcontainers.Container
-		Config PostgreSQLContainerConfig
-	}
-	PostgreSQLContainerConfig struct {
-		ImageTag   string
-		User       string
-		Password   string
-		MappedPort string
-		Database   string
-		Host       string
-	}
-)
+type PostgreSQLContainer struct {
+	testcontainers.Container
+	Config PostgreSQLContainerConfig
+}
+
+type PostgreSQLContainerConfig struct {
+	ImageTag   string
+	User       string
+	Password   string
+	MappedPort string
+	DBName   string
+	Host       string
+}
+
 
 func (c *PostgreSQLContainer) GetDSN() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", c.Config.User,
-		c.Config.Password, c.Config.Host, c.Config.MappedPort, c.Config.Database)
+		c.Config.Password, c.Config.Host, c.Config.MappedPort, c.Config.DBName)
 }
 
 func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
@@ -39,7 +39,7 @@ func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
 		ImageTag: "latest",
 		User:     "anton",
 		Password: "lol",
-		Database: "avito",
+		DBName: "avito",
 	}
 
 	containerPort := psqlPort + "/tcp"
@@ -49,7 +49,7 @@ func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
 			Env: map[string]string{
 				"POSTGRES_USER":     config.User,
 				"POSTGRES_PASSWORD": config.Password,
-				"POSTGRES_DB":       config.Database,
+				"POSTGRES_DB":       config.DBName,
 			},
 			ExposedPorts: []string{
 				containerPort,
@@ -78,11 +78,6 @@ func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
 	config.Host = host
 
 	fmt.Println("Host:", config.Host, config.MappedPort)
-
-	// if err := container.Start(context.Background()); err != nil {
-	// 	log.Fatalf("Failed to start")
-	// 	return nil, err
-	// }
 
 	return &PostgreSQLContainer{
 		Container: container,

@@ -105,7 +105,6 @@ func NewApp() (*App, error) {
 
 	grpcServerImpl := grpccontrollers.NewPVZServer(service)
 
-
 	logger.Info("Setting up HTTP routes...")
 	router := gin.New()
 
@@ -166,6 +165,7 @@ func (a *App) Start() error {
 	if err := g.Wait(); err != nil {
 		return err
 	}
+	
 	a.logger.Info("HTTP Server Gracefully stopped")
 	a.logger.Info("GRPC Server Gracefully stopped")
 

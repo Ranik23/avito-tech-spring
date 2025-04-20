@@ -10,16 +10,20 @@ import (
 func RunMigrations(dsn, migrationsPath string) error {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		return fmt.Errorf("sql.Open: %w", err)
+		return fmt.Errorf("failed to open database connection: %w", err)
 	}
 	defer db.Close()
 
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+
 	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("goose.SetDialect: %w", err)
+		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
 	if err := goose.Up(db, migrationsPath); err != nil {
-		return fmt.Errorf("goose.Up: %w", err)
+		return fmt.Errorf("failed to apply migrations: %w", err)
 	}
 
 	return nil

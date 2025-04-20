@@ -28,7 +28,6 @@ type Config struct {
 	ShutdownTimeout   	time.Duration
 }
 
-// убрать srv gen.PVZServiceServer и поставить что-то более общее
 func New(logger *slog.Logger, config *Config, server *grpc.Server) *Server {
 	return &Server{
 		server: server,

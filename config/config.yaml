@@ -9,6 +9,7 @@ GRPCServer:
 Storage:
   Host: "0.0.0.0"
   Port: "5432"
+  ssl: "disable"
 
   MaxConnections: 100
   MinConnections: 20
