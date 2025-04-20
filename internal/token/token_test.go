@@ -30,12 +30,10 @@ func TestToken_GenerateAndParse_Success(t *testing.T) {
 }
 
 func TestToken_Parse_InvalidSignature(t *testing.T) {
-	// Создаём токен с другим секретом
 	secret := "correct-secret"
 	wrongSecret := "wrong-secret"
 	tk := NewToken(secret, slog.Default())
 
-	// Токен подписан другим ключом
 	foreign := NewToken(wrongSecret, slog.Default())
 	tokenStr, err := foreign.GenerateToken("user123", "Client")
 	assert.NoError(t, err)
@@ -67,7 +65,6 @@ func TestToken_Parse_MalformedToken(t *testing.T) {
 	secret := "mysecret"
 	tk := NewToken(secret, slog.Default())
 
-	// Нарушаем формат токена
 	malformed := "this.is.not.a.jwt"
 
 	claims, err := tk.Parse(malformed)

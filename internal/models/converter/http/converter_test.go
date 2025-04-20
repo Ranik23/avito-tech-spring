@@ -11,7 +11,6 @@ import (
 )
 
 func TestFromDomainProductToDtoPostProductResp(t *testing.T) {
-	// Arrange
 	product := &domain.Product{
 		ID:         "productID123",
 		ReceptionID: "receptionID123",
