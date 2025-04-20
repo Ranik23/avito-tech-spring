@@ -106,7 +106,14 @@ func NewApp() (*App, error) {
 
 	logger.Info("Setting up HTTP routes...")
 	router := gin.New()
-	router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8085"}, // Swagger UI
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+	
 	SetUpRoutes(router, authController, pvzController, tokenService)
 
 	logger.Info("Creating HTTP server...")
