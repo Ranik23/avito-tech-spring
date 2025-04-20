@@ -270,7 +270,6 @@ func TestRegister_UserAlreadyExists(t *testing.T) {
 
 	id, err := authService.Register(context.Background(), email, password, role)
 
-	// Assertions
 	assert.Error(t, err)
 	assert.Equal(t, ErrAlreadyExists, err)
 	assert.Empty(t, id)

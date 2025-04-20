@@ -3,11 +3,11 @@ HTTPServer:
   Port: "8080"
 
 GRPCServer:
-  Host: "localhost"
+  Host: "0.0.0.0"
   Port: "9090"
 
 Gateway:
-  Host: "localhost"
+  Host: "0.0.0.0"
   Port: "6060"
 
 Storage:
