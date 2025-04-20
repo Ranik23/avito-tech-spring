@@ -21,6 +21,7 @@ import (
 	"github.com/lmittmann/tint"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"github.com/gin-contrib/cors"
 )
 
 type App struct {
@@ -91,6 +92,7 @@ func NewApp() (*App, error) {
 
 	logger.Info("Setting up HTTP routes...")
 	router := gin.New()
+	router.Use(cors.Default())
 	SetUpRoutes(router, authController, pvzController, tokenService)
 
 	logger.Info("Creating HTTP server...")

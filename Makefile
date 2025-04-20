@@ -16,3 +16,7 @@ run:
 
 compose:
 	docker compose up
+
+# swagger:
+# 	docker pull swaggerapi/swagger-ui
+# 	docker run -p 8085:8080 -e SWAGGER_JSON=/foo/swagger.yaml -v ./api/openapi2/v1/backend.yaml:/foo/swagger.yaml swaggerapi/swagger-ui

@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: Сервис для управления ПВЗ и приемкой товаров
-  title: backend service
+  title: Backend Service
   version: 1.0.0
 host: localhost:8080
 paths:

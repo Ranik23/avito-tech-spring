@@ -65,6 +65,19 @@ services:
       - ./migrations:/changesets
     networks:
       - my-network
+  
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./api/openapi2/v1/backend.yaml:/foo/swagger.yaml
+    environment:
+      - SWAGGER_JSON=/foo/swagger.yaml
+    networks:
+      - my-network
+
 
 networks:
   my-network:
