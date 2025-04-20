@@ -9,6 +9,7 @@ import (
 
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
 	"github.com/Ranik23/avito-tech-spring/internal/repository/mock"
+	"github.com/Ranik23/avito-tech-spring/internal/service"
 	"go.uber.org/mock/gomock"
 )
 
@@ -16,21 +17,28 @@ import (
 
 var fn func(ctx context.Context) error
 
-func (s *TestSuite) TestRollBack() {
+func (s *TestSuite) TestRollBackRegister() {
 	ctrl := gomock.NewController(s.T())
-	txManager := mock.NewMockTxManager(ctrl)
+
 	exampleError := errors.New("do error")
 	exampleEmail := "email"
 	examplePassword := "password"
 	exampleRole := "employee"
 
-	txManager.EXPECT().Do(gomock.Any(), gomock.AssignableToTypeOf(fn)).DoAndReturn(
+	txManager := mock.NewMockTxManager(ctrl)
+
+	authService := service.NewAuthService(s.userRepo, txManager, s.token, s.hasher, s.logger)
+	pvzService := service.NewPVZService(s.pvzRepo, s.receptionRepo, s.cities, s.productRepo, txManager, s.logger)
+	service := service.NewService(authService, pvzService)
+
+	txManager.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, fn func(context.Context) error) error {
 			fn(ctx)
 			return exampleError
 		},
 	)
-	_, err := s.service.Register(context.Background(), exampleEmail, examplePassword, exampleRole)
+
+	_, err := service.Register(context.Background(), exampleEmail, examplePassword, exampleRole)
 	s.Require().Error(exampleError)
 	
 	db, err := sql.Open("postgres", s.psqlContainer.GetDSN())
@@ -44,5 +52,6 @@ func (s *TestSuite) TestRollBack() {
 		SELECT id FROM users;
 	`).Scan(&user.ID)
 
-	s.Require().Error(err)
+	s.Require().Equal(sql.ErrNoRows, err)
 }
+

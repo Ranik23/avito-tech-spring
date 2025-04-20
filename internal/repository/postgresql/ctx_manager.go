@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Ranik23/avito-tech-spring/internal/repository"
+	"github.com/jackc/pgx/v5"
 	pool "github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,11 +20,11 @@ func NewCtxManager(pool *pool.Pool) repository.CtxManager {
 }
 
 func (p *postgresCtxManager) ByKey(ctx context.Context, key repository.CtxKey) repository.Transaction {
-	tx, ok := ctx.Value(key).(repository.Transaction)
+	tx, ok := ctx.Value(key).(pgx.Tx)
 	if !ok {
 		return nil
 	}
-	return tx
+	return NewTransaction(tx)
 }
 
 func (p *postgresCtxManager) Default(ctx context.Context) repository.Transaction {

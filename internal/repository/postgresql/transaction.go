@@ -19,10 +19,9 @@ func NewTransaction(tx pgx.Tx) repository.Transaction {
 	}
 }
 
-func (t *postgresTransaction) Transaction() interface{} {
+func (t *postgresTransaction) Begin() interface{} {
 	return t.Tx
 }
-
 
 func (t *postgresTransaction) Commit(ctx context.Context) error {
 	return t.Tx.Commit(ctx)

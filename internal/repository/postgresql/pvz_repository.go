@@ -28,7 +28,7 @@ func (p *postgresPvzRepository) GetListOfPVZS(ctx context.Context) ([]domain.Pvz
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("*").
@@ -72,7 +72,7 @@ func (p *postgresPvzRepository) GetPVZ(ctx context.Context, id string) (*domain.
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "registration_date", "city").
@@ -108,7 +108,7 @@ func (p *postgresPvzRepository) GetPVZS(ctx context.Context, offset int, limit i
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "registration_date", "city").
@@ -161,7 +161,7 @@ func (p *postgresPvzRepository) CreatePVZ(ctx context.Context, city string) (*do
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Insert("pvz").

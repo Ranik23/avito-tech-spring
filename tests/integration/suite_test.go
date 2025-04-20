@@ -12,6 +12,7 @@ import (
 
 	"github.com/Ranik23/avito-tech-spring/internal/config"
 	"github.com/Ranik23/avito-tech-spring/internal/hasher"
+	"github.com/Ranik23/avito-tech-spring/internal/repository"
 	"github.com/Ranik23/avito-tech-spring/internal/repository/postgresql"
 	"github.com/Ranik23/avito-tech-spring/internal/service"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
@@ -25,6 +26,22 @@ import (
 type TestSuite struct {
 	suite.Suite
 	psqlContainer *util.PostgreSQLContainer
+
+
+	authService service.AuthService
+	pvzService service.PVZService
+
+	receptionRepo repository.ReceptionRepository
+	pvzRepo repository.PvzRepository
+	userRepo repository.UserRepository
+	productRepo repository.ProductRepository
+
+	token token.Token
+	hasher hasher.Hasher
+
+	cities []string
+
+	logger *slog.Logger
 
 	service     service.Service	 
 }
@@ -58,6 +75,7 @@ func (s *TestSuite) SetupSuite() {
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	s.Require().NoError(err)
 
+
 	ctxManager := postgresql.NewCtxManager(pool)
 	txManager := postgresql.NewTxManager(pool, logger, ctxManager)
 
@@ -67,17 +85,30 @@ func (s *TestSuite) SetupSuite() {
 	pvzRepo := postgresql.NewPostgresPvzRepository(ctxManager, logger)
 
 
+	s.pvzRepo = pvzRepo
+	s.userRepo = userRepo
+	s.productRepo = productRepo
+	s.receptionRepo = receptionRepo
+
 	token := token.NewToken("lol", logger)
 	hasher := hasher.NewHasher()
 
-	cities := []string{"Moscow"}
 
+	s.token = token
+	s.hasher = hasher
+
+	cities := []string{"Moscow"}
+	s.cities = cities
 
 	authService := service.NewAuthService(userRepo, txManager, token, hasher, logger)
 	pvzService := service.NewPVZService(pvzRepo, receptionRepo, cities, productRepo, txManager, logger)
 
 	service := service.NewService(authService, pvzService)
 
+	s.logger = logger
+
+	s.authService = authService
+	s.pvzService = pvzService
 	s.service = service
 }
 

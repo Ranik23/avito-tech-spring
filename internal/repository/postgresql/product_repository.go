@@ -29,7 +29,7 @@ func (p *postgresProductRepository) CreateProduct(ctx context.Context, productTy
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Insert("product").
@@ -72,7 +72,7 @@ func (p *postgresProductRepository) DeleteProduct(ctx context.Context, productID
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Delete("product").
@@ -105,7 +105,7 @@ func (p *postgresProductRepository) FindTheLastProduct(ctx context.Context, pvzI
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("product.id", "product.date_time", "type", "reception_id").
@@ -151,7 +151,7 @@ func (p *postgresProductRepository) GetProducts(ctx context.Context, receptionID
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "date_time", "type", "reception_id").

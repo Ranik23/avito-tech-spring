@@ -30,7 +30,7 @@ func (p *postgresUserRepository) CreateUser(ctx context.Context, email string, h
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.Insert("users").
 		Columns("email", "hashed_password", "role").
@@ -71,7 +71,7 @@ func (p *postgresUserRepository) GetUser(ctx context.Context, email string) (*do
 		tr = p.ctxManager.Default(ctx)
 	}
 
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.Select("id, email, hashed_password, role, created_at").
 		From("users").

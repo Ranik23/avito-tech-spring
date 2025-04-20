@@ -31,7 +31,7 @@ func (p *postgresReceptionRepository) CreateReception(ctx context.Context, pvzID
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Insert("reception").
@@ -71,7 +71,7 @@ func (p *postgresReceptionRepository) FindOpen(ctx context.Context, pvzID string
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "date_time", "pvz_id", "status").
@@ -117,7 +117,7 @@ func (p *postgresReceptionRepository) GetReceptionsFiltered(ctx context.Context,
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	query, args, err := squirrel.
 		Select("id", "date_time", "pvz_id", "status").
@@ -176,7 +176,7 @@ func (p *postgresReceptionRepository) UpdateReceptionStatus(ctx context.Context,
 	if tr == nil {
 		tr = p.ctxManager.Default(ctx)
 	}
-	exec := tr.Transaction().(pgx.Tx)
+	exec := tr.Begin().(pgx.Tx)
 
 	id, err := strconv.Atoi(receptionID)
 	if err != nil {

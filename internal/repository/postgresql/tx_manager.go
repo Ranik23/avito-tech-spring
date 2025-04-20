@@ -30,7 +30,7 @@ func (p *txManager) Do(ctx context.Context, fn func(context.Context) error) erro
 		return err
 	}
 
-	newTx := NewTransaction(tx)
+	newTx := tx
 
 	newCtx := context.WithValue(ctx, p.ctxManager.CtxKey(), newTx)
 
