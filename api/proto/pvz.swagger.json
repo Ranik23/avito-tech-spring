@@ -1,9 +1,8 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Order Pick-Up Point gRPC server",
-    "description": "API для управления пунктами выдачи заказов (ПВЗ)",
-    "version": "1.0"
+    "title": "api/proto/pvz.proto",
+    "version": "version not set"
   },
   "tags": [
     {
@@ -11,10 +10,6 @@
     }
   ],
   "host": "localhost:6060",
-  "schemes": [
-    "http",
-    "https"
-  ],
   "consumes": [
     "application/json"
   ],
@@ -24,20 +19,12 @@
   "paths": {
     "/api/v1/pvz": {
       "get": {
-        "summary": "Получение списка пунктов выдачи",
-        "description": "Возвращает список всех зарегистрированных ПВЗ",
         "operationId": "PVZService_GetPVZList",
         "responses": {
           "200": {
-            "description": "Успешный ответ со списком ПВЗ",
+            "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetPVZListResponse"
-            }
-          },
-          "500": {
-            "description": "Внутренняя ошибка сервера",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -48,7 +35,7 @@
           }
         },
         "tags": [
-          "PVZ"
+          "PVZService"
         ]
       }
     }
@@ -90,8 +77,7 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1PVZ"
-          },
-          "description": "Массив пунктов выдачи"
+          }
         }
       }
     },
@@ -99,20 +85,14 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "example": "550e8400-e29b-41d4-a716-446655440000",
-          "description": "Уникальный идентификатор ПВЗ"
+          "type": "string"
         },
         "registrationDate": {
           "type": "string",
-          "format": "date-time",
-          "example": "2023-01-15T12:00:00Z",
-          "description": "Дата регистрации ПВЗ"
+          "format": "date-time"
         },
         "city": {
-          "type": "string",
-          "example": "Москва",
-          "description": "Город расположения"
+          "type": "string"
         }
       }
     }

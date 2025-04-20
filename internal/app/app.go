@@ -27,6 +27,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 type App struct {
@@ -126,8 +127,6 @@ func NewApp() (*App, error) {
 
 
 
-
-
 	logger.Info("Creating HTTP server...")
 
 	httpServerConfig := &httpserver.Config{
@@ -163,8 +162,10 @@ func NewApp() (*App, error) {
 	grpcServerImpl := grpccontrollers.NewPVZServer(service)
 	
 	grpcServer := grpc.NewServer()
-	gen.RegisterPVZServiceServer(grpcServer, grpcServerImpl)
 
+	gen.RegisterPVZServiceServer(grpcServer, grpcServerImpl)
+	reflection.Register(grpcServer)
+	
 	grpcSrv := grpcserver.New(logger, grpcServerConfig, grpcServer)
 
 	logger.Info("GRCP Server Created")

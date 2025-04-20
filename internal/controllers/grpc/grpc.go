@@ -15,7 +15,7 @@ type PVZServer struct {
 }
 
 
-func NewPVZServer(service service.Service) pvz_v1.PVZServiceServer {
+func NewPVZServer(service service.Service) *PVZServer {
 	return &PVZServer{
 		service: service,
 	}
