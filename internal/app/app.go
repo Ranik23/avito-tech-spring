@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/Ranik23/avito-tech-spring/internal/repository/postgresql"
 	"github.com/Ranik23/avito-tech-spring/internal/service"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
+	"github.com/Ranik23/avito-tech-spring/pkg/closure"
 	grpcserver "github.com/Ranik23/avito-tech-spring/pkg/grpc-server"
 	httpserver "github.com/Ranik23/avito-tech-spring/pkg/http-server"
 	"github.com/gin-gonic/gin"
@@ -25,19 +27,25 @@ import (
 )
 
 type App struct {
-	service service.Service
-	logger  *slog.Logger
+	service 	service.Service
+	logger  	*slog.Logger
 
-	cfg *config.Config
+	cfg 		*config.Config
 
-	httpServer *httpserver.Server
-	grcpServer *grpcserver.Server
+	httpServer 	*httpserver.Server
+	grcpServer 	*grpcserver.Server
+
+	closer 		*closure.Closer
 }
 
 func NewApp() (*App, error) {
 	logger := slog.New(tint.NewHandler(os.Stdout, nil))
 	
 	logger.Info("Loading configuration...")
+
+	closer := closure.NewCloser()
+
+	logger.Info("Closure initialized!")
 
 	cfg, err := config.LoadConfig("config/", ".env")
 	if err != nil {
@@ -52,6 +60,12 @@ func NewApp() (*App, error) {
 		logger.Error("Failed to connect to database", slog.String("error", err.Error()))
 		return nil, err
 	}
+	closer.Add(func(ctx context.Context) error {
+		logger.Info("Closing Pool!")
+		pool.Close()
+		return nil
+	})
+
 	logger.Info("Connected to database")
 
 	ctxManager := postgresql.NewCtxManager(pool)
@@ -105,7 +119,6 @@ func NewApp() (*App, error) {
 
 	grpcSrv := grpcserver.New(logger, grpcServerConfig, grpcServer)
 
-
 	logger.Info("App initialization complete")
 
 	return &App{
@@ -114,10 +127,18 @@ func NewApp() (*App, error) {
 		cfg:        cfg,
 		httpServer: httpServer,
 		grcpServer: grpcSrv,
+		closer: 	closer,
 	}, nil
 }
 
 func (a *App) Start() error {
+
+	defer func() {
+		if err := a.closer.Close(context.Background()); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	g, _ := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
