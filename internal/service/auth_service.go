@@ -38,7 +38,7 @@ func NewAuthService(
 		token:           token,
 		hasher:          hasher,
 		logger:          logger,
-		acceptableRoles: []string{"Client", "Moderator"},
+		acceptableRoles: []string{"client", "moderator"},
 	}
 }
 

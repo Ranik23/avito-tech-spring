@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Ranik23/avito-tech-spring/internal/models/dto"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
@@ -17,8 +18,10 @@ func JwtAuth(tokenService token.Token) gin.HandlerFunc {
 			})
 			return
 		}
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
 		
-		claims, err := tokenService.Parse(authHeader)
+		claims, err := tokenService.Parse(token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, dto.Error{
 				Message: err.Error(),
