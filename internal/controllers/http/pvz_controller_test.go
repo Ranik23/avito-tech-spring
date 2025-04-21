@@ -205,7 +205,7 @@ func TestCreateReception(t *testing.T) {
 			mockExpect: func() {
 				mockPVZService.EXPECT().
 					StartReception(gomock.Any(), "fail").
-					Return(nil, errors.New("err"))
+					Return(nil, errors.New("err")).AnyTimes()
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -384,4 +384,95 @@ func TestCreatePvz(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetPvzInfo(t *testing.T) {
+    ctrl := gomock.NewController(t)
+    defer ctrl.Finish()
+
+	mockPVZService := mock.NewMockPVZService(ctrl)
+	mockAuthService := mock.NewMockAuthService(ctrl)
+
+	service := service.NewService(mockAuthService, mockPVZService)
+    controller := NewPVZController(service, slog.Default())
+
+    tests := []struct {
+        name           string
+        role           string
+        queryParams    map[string]string
+        mockExpect      func()
+        expectedStatus int
+    }{
+        {
+            name: "success with valid params",
+            role: "employee",
+            queryParams: map[string]string{
+                "startDate": "2023-01-01T00:00:00Z",
+                "endDate":   "2023-01-31T00:00:00Z",
+                "page":      "1",
+                "limit":     "10",
+            },
+            mockExpect: func() {
+                mockPVZService.EXPECT().
+                    GetPVZSInfo(gomock.Any(), gomock.Any(), gomock.Any(), 1, 10).
+                    Return([]domain.PvzInfo{}, nil).AnyTimes()
+            },
+            expectedStatus: http.StatusOK,
+        },
+        {
+            name: "missing startDate",
+            role: "employee",
+            queryParams: map[string]string{
+                "endDate": "2023-01-31T00:00:00Z",
+            },
+            mockExpect:      func() {},
+            expectedStatus: http.StatusBadRequest,
+        },
+        {
+            name: "invalid page number",
+            role: "employee",
+            queryParams: map[string]string{
+                "startDate": "2023-01-01T00:00:00Z",
+                "endDate":   "2023-01-31T00:00:00Z",
+                "page":     "invalid",
+            },
+            mockExpect:      func() {},
+            expectedStatus: http.StatusBadRequest,
+        },
+        {
+            name: "service error",
+            role: "employee",
+            queryParams: map[string]string{
+                "startDate": "2023-01-01T00:00:00Z",
+                "endDate":   "2023-01-31T00:00:00Z",
+            },
+            mockExpect: func() {},
+            expectedStatus: http.StatusBadRequest,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tt.mockExpect()
+
+            w := httptest.NewRecorder()
+            req := httptest.NewRequest(http.MethodGet, "/pvz/info", nil)
+            
+            q := req.URL.Query()
+            for k, v := range tt.queryParams {
+                q.Add(k, v)
+            }
+            req.URL.RawQuery = q.Encode()
+
+            c, _ := gin.CreateTestContext(w)
+            c.Request = req
+            c.Set("role", tt.role)
+
+            controller.GetPvzInfo(c)
+
+            if w.Code != tt.expectedStatus {
+                t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
+            }
+        })
+    }
 }

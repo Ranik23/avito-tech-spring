@@ -170,13 +170,13 @@ func (p *pvzController) GetPvzInfo(c *gin.Context) {
 		return
 	}
 
-	pageStr := c.DefaultQuery("page", "1")
-	limitStr := c.DefaultQuery("limit", "10")
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
 		c.JSON(http.StatusBadRequest, dto.Error{
-			Message: err.Error(),
+			Message: "failed to convert to int",
 		})
 		return
 	}
@@ -184,7 +184,7 @@ func (p *pvzController) GetPvzInfo(c *gin.Context) {
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit < 1 || limit > 30 {
 		c.JSON(http.StatusBadRequest, dto.Error{
-			Message: err.Error(),
+			Message: "failed to convert to int",
 		})
 		return
 	}
@@ -218,7 +218,7 @@ func (p *pvzController) GetPvzInfo(c *gin.Context) {
 func (p *pvzController) parseTimeParam(c *gin.Context, param string) (time.Time, bool) {
 	value := c.Query(param)
 	if value == "" {
-		return time.Now(), true
+		return time.Now(), false
 	}
 	t, err := time.Parse(time.RFC3339, value)
 	if err != nil {
