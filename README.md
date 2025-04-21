@@ -36,3 +36,7 @@
     make docker - запускает все контейнеры
     localhost:8090 - swagger для работы с grpc ручкой
     localhost:8085 - swagger для работы с http ручками
+
+### Метрики
+    Сам сервер порт проброшен и все данные можно увидить на localhost:9090/metrics.
+
