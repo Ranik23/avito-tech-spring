@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -38,7 +39,8 @@ func New(logger *slog.Logger, config *Config, server *grpc.Server) *Server {
 
 
 func (s *Server) Start(ctx context.Context) error {
-	s.logger.Info(s.config.StartMsg)
+	address := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
+	s.logger.Info(s.config.StartMsg + address)
 
 	g, ctx := errgroup.WithContext(ctx)
 

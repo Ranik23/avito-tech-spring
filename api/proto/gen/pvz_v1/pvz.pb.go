@@ -214,21 +214,28 @@ var File_api_proto_pvz_proto protoreflect.FileDescriptor
 
 const file_api_proto_pvz_proto_rawDesc = "" +
 	"\n" +
-	"\x13api/proto/pvz.proto\x12\x06pvz.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"r\n" +
-	"\x03PVZ\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12G\n" +
-	"\x11registration_date\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x10registrationDate\x12\x12\n" +
-	"\x04city\x18\x03 \x01(\tR\x04city\"\x13\n" +
-	"\x11GetPVZListRequest\"5\n" +
-	"\x12GetPVZListResponse\x12\x1f\n" +
-	"\x04pvzs\x18\x01 \x03(\v2\v.pvz.v1.PVZR\x04pvzs*P\n" +
+	"\x13api/proto/pvz.proto\x12\x06pvz.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xf0\x02\n" +
+	"\x03PVZ\x12s\n" +
+	"\x02id\x18\x01 \x01(\tBc\x92A`26Уникальный идентификатор ПВЗJ&\"123e4567-e89b-12d3-a456-426614174000\"R\x02id\x12\x9e\x01\n" +
+	"\x11registration_date\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampBU\x92AR28Дата регистрации ПВЗ в системеJ\x16\"2023-01-15T12:00:00Z\"R\x10registrationDate\x12S\n" +
+	"\x04city\x18\x03 \x01(\tB?\x92A<2*Город расположения ПВЗJ\x0e\"Москва\"R\x04city\"\x13\n" +
+	"\x11GetPVZListRequest\"O\n" +
+	"\x12GetPVZListResponse\x129\n" +
+	"\x04pvzs\x18\x01 \x03(\v2\v.pvz.v1.PVZB\x18\x92A\x152\x13Массив ПВЗR\x04pvzs*P\n" +
 	"\x0fReceptionStatus\x12 \n" +
 	"\x1cRECEPTION_STATUS_IN_PROGRESS\x10\x00\x12\x1b\n" +
-	"\x17RECEPTION_STATUS_CLOSED\x10\x012f\n" +
+	"\x17RECEPTION_STATUS_CLOSED\x10\x012\xba\x03\n" +
 	"\n" +
-	"PVZService\x12X\n" +
+	"PVZService\x12\xab\x03\n" +
 	"\n" +
-	"GetPVZList\x12\x19.pvz.v1.GetPVZListRequest\x1a\x1a.pvz.v1.GetPVZListResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/api/v1/pvzB0\x92A\x10\x1a\x0elocalhost:6060Z\x1bapi/proto/gen/pvz_v1;pvz_v1b\x06proto3"
+	"GetPVZList\x12\x19.pvz.v1.GetPVZListRequest\x1a\x1a.pvz.v1.GetPVZListResponse\"\xe5\x02\x92A\xce\x02\n" +
+	"\x03PVZ\x12-Получить список всех ПВЗ\x1a\x7fВозвращает список всех пунктов выдачи заказов с их основными даннымиJD\n" +
+	"\x03200\x12=\n" +
+	"\x1bУспешный ответ\x12\x1e\n" +
+	"\x1c\x1a\x1a.pvz.v1.GetPVZListResponseJQ\n" +
+	"\x03500\x12J\n" +
+	"0Внутренняя ошибка сервера\x12\x16\n" +
+	"\x14\x1a\x12.google.rpc.Status\x82\xd3\xe4\x93\x02\r\x12\v/api/v1/pvzBX\x92A8\x1a\x0elocalhost:6060*\x02\x01\x022\x10application/json:\x10application/jsonZ\x1bapi/proto/gen/pvz_v1;pvz_v1b\x06proto3"
 
 var (
 	file_api_proto_pvz_proto_rawDescOnce sync.Once

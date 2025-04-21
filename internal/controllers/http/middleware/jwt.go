@@ -3,7 +3,9 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/Ranik23/avito-tech-spring/internal/metrics"
 	"github.com/Ranik23/avito-tech-spring/internal/models/dto"
 	"github.com/Ranik23/avito-tech-spring/internal/token"
 	"github.com/gin-gonic/gin"
@@ -37,5 +39,18 @@ func JwtAuth(tokenService token.Token) gin.HandlerFunc {
 		}
 
 		c.Next()
+	}
+}
+
+func Duration() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		
+		c.Next()
+
+		duration := time.Since(start).Seconds()
+
+		metrics.HttpResponseTime.WithLabelValues(c.Request.Method, c.Request.URL.String()).Observe(duration)
+		metrics.RequestsTotal.Inc()
 	}
 }

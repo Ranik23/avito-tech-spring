@@ -10,8 +10,9 @@ import (
 type Config struct {           
 	HTTPServer   	HTTPServerConfig   	`yaml:"HTTPServer"`
 	GRPCServer   	GRPCServerConfig   	`yaml:"GRPCServer"`
-	GatewayServer 	GatewayServer		`yaml:"Gateway"`
+	GatewayServer 	GatewayServer		`yaml:"GatewayServer"`
 	Storage      	StorageConfig      	`yaml:"Storage"`
+	MetricServer	MetricServerConfig	`yaml:"MetricServer"`
 	SecretKey    	string				`yaml:"-"`
 	Cities		 	[]string			`yaml:"Cities"`
 }

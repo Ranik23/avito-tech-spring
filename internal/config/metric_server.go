@@ -1,8 +1,7 @@
 package config
 
 
-
-type GatewayServer struct {
+type MetricServerConfig struct {
 	Host string		`yaml:"Host"`
 	Port string		`yaml:"Port"`
 }

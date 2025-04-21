@@ -8,9 +8,12 @@ import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   host: "localhost:6060";
+  schemes: HTTP;
+  schemes: HTTPS;
+  consumes: "application/json";
+  produces: "application/json";
 };
 
 service PVZService {
@@ -18,13 +21,57 @@ service PVZService {
     option (google.api.http) = {
       get: "/api/v1/pvz"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Получить список всех ПВЗ";
+      description: "Возвращает список всех пунктов выдачи заказов с их основными данными";
+      tags: "PVZ";
+      responses: {
+        key: "200";
+        value: {
+          description: "Успешный ответ";
+          schema: {
+            json_schema: {
+              ref: ".pvz.v1.GetPVZListResponse";
+            }
+          }
+        }
+      };
+      responses: {
+        key: "500";
+        value: {
+          description: "Внутренняя ошибка сервера";
+          schema: {
+            json_schema: {
+              ref: ".google.rpc.Status";
+            }
+          }
+        }
+      };
+    };
   }
 }
 
 message PVZ {
-  string id = 1;
-  google.protobuf.Timestamp registration_date = 2;
-  string city = 3;
+  string id = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Уникальный идентификатор ПВЗ";
+      example: "\"123e4567-e89b-12d3-a456-426614174000\"";
+    }
+  ];
+  
+  google.protobuf.Timestamp registration_date = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Дата регистрации ПВЗ в системе";
+      example: "\"2023-01-15T12:00:00Z\"";
+    }
+  ];
+  
+  string city = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Город расположения ПВЗ";
+      example: "\"Москва\"";
+    }
+  ];
 }
 
 enum ReceptionStatus {
@@ -35,5 +82,9 @@ enum ReceptionStatus {
 message GetPVZListRequest {}
 
 message GetPVZListResponse {
-  repeated PVZ pvzs = 1;
+  repeated PVZ pvzs = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Массив ПВЗ";
+    }
+  ];
 }

@@ -4,9 +4,13 @@ HTTPServer:
 
 GRPCServer:
   Host: "0.0.0.0"
-  Port: "9090"
+  Port: "3000"
 
-Gateway:
+MetricServer:
+  Host: "0.0.0.0"
+  Port: "9000"
+
+GatewayServer:
   Host: "0.0.0.0"
   Port: "6060"
 
@@ -20,6 +24,5 @@ Storage:
   MaxLifeTime: 3600
   MaxIdleTime: 300
   HealthCheckPeriod: 30
-
 
 Cities: Moscow,Kazan,Miami

@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -48,7 +49,8 @@ func New(logger *slog.Logger, config *Config, handler http.Handler) *Server {
 }
 
 func (a *Server) Start(ctx context.Context) error {
-	a.logger.Info(a.config.StartMsg)
+	address := fmt.Sprintf("%s:%s", a.config.Host, a.config.Port)
+	a.logger.Info(a.config.StartMsg + address)
 
 	g, ctx := errgroup.WithContext(ctx)
 

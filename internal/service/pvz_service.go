@@ -7,6 +7,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/Ranik23/avito-tech-spring/internal/metrics"
 	"github.com/Ranik23/avito-tech-spring/internal/models/domain"
 	"github.com/Ranik23/avito-tech-spring/internal/repository"
 )
@@ -83,8 +84,11 @@ func (p *pvzService) AddProduct(ctx context.Context, pvzID string, productType s
 	})
 
 	if err != nil {
+		p.logger.Error("Failed to Add product", slog.String("error", err.Error()))
 		return nil, err
 	}
+
+	metrics.ProductsAddedTotal.Inc()
 
 	return product, nil
 }
@@ -117,6 +121,7 @@ func (p *pvzService) CloseReception(ctx context.Context, pvzID string) (*domain.
 	})
 
 	if err != nil {
+		p.logger.Error("Failed to close reception", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -150,6 +155,8 @@ func (p *pvzService) CreatePVZ(ctx context.Context, city string) (*domain.Pvz, e
 			slog.String("error", err.Error()))
 		return nil, err
 	}
+
+	metrics.PvzCreatedTotal.Inc()
 
 	return pvz, nil
 }
@@ -190,6 +197,7 @@ func (p *pvzService) DeleteLastProduct(ctx context.Context, pvzID string) error 
 	})
 
 	if err != nil {
+		p.logger.Error("Failed to Delete Last product", slog.String("error", err.Error()))
 		return err
 	}
 
@@ -236,6 +244,7 @@ func (p *pvzService) GetPVZSInfo(ctx context.Context, start time.Time, end time.
 		return nil
 	})
 	if err != nil {
+		p.logger.Error("Failed to get PVZ info", slog.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -267,10 +276,12 @@ func (p *pvzService) StartReception(ctx context.Context, pvzID string) (*domain.
 
 		return nil
 	})
-
 	if err != nil {
+		p.logger.Error("Failed to Start Reception", slog.String("error", err.Error()))
 		return nil, err
 	}
+
+	metrics.OrderReceptionsCreatedTotal.Inc()
 
 	return receptionToReturn, nil
 }
