@@ -55,18 +55,15 @@ func (c *Closer) Close(ctx context.Context) error {
 	case <-done:
 		break
 	case <-ctx.Done():
-		return fmt.Errorf("shutdown timeout: %v", ctx.Err())
+		return fmt.Errorf("context cancelled")
 	}
 
 	for err := range errorCh {
-		msgs = append(msgs, fmt.Sprintf("[!] %v", err))
+		msgs = append(msgs, fmt.Sprintf("%v", err))
 	}
 
 	if len(msgs) > 0 {
-		return fmt.Errorf(
-			"shutdown completed with errors:\n%s",
-			strings.Join(msgs, "\n"),
-		)
+		return fmt.Errorf("shutdown completed with errors:\n%s",strings.Join(msgs, "\n"),)
 	}
 
 	return nil

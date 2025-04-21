@@ -21,3 +21,6 @@ run:
 
 compose:
 	docker compose up
+
+k6:
+    k6 run scripts/k6/script.js

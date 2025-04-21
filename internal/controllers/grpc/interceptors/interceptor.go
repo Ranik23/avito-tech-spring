@@ -41,12 +41,13 @@ func LoggingUnaryInterceptor(logger *slog.Logger) grpc.UnaryServerInterceptor {
 		if err != nil {
 			attrs = append(attrs, slog.Any("error", err))
 			logger.LogAttrs(ctx, slog.LevelError, "gRPC call failed", attrs...)
-			return nil, err
+			return nil, err // нельзя привести же ошибку к dto, есть еще вариант сделать это на уровне выше, то есть на самом HTTP
+			// сервере, но там нет интерсепторов 
 		}
 
 		logger.LogAttrs(ctx, slog.LevelInfo, "gRPC call completed", attrs...)
 
-		return resp.(*pvz_v1.GetPVZListResponse), nil
+		return resp.(*pvz_v1.GetPVZListResponse), nil 
 		
 	}
 }

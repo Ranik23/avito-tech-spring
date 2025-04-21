@@ -47,9 +47,10 @@ func (p *pvzController) CloseLastReception(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.Error{
 			Message: "no pvzId provided",
 		})
+		p.logger.Error("")
 		return
 	}
-
+	
 	reception, err := p.service.CloseReception(c, pvzID)
 	if err != nil {
 		if errors.Is(err, service.ErrAllReceptionsClosed) {

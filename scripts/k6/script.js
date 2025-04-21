@@ -2,18 +2,13 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 export const options = {
-    scenarios: {
-        moderate_load: {
-            executor: 'constant-arrival-rate',
-            rate: 50,
-            timeUnit: '1s',
-            duration: '30s',
-            preAllocatedVUs: 10,
-            maxVUs: 50,
-        },
-    },
-};
-
+    stages: [
+      { duration: '30s', target: 20 },
+      { duration: '1m30s', target: 10 },
+      { duration: '20s', target: 0 },
+    ],
+  };
+  
 const BASE_URL = 'http://localhost:8080';
 const HEADERS = { 'Content-Type': 'application/json' };
 

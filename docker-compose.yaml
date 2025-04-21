@@ -13,7 +13,7 @@ services:
       - 9000:9000 # metric
       - 8080:8080 # main http
       - 6060:6060 # gateway
-      - 3030:3030 # grpc
+      - 3000:3000 # grpc
     environment:
       - DB_HOST=postgresql
       - DB_PASSWORD=password

@@ -15,7 +15,6 @@ type PostgreSQLContainer struct {
 }
 
 type PostgreSQLContainerConfig struct {
-	ImageTag   string
 	User       string
 	Password   string
 	MappedPort string
@@ -30,19 +29,14 @@ func (c *PostgreSQLContainer) GetDSN() string {
 }
 
 func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
-	const (
-		psqlImage = "postgres"
-		psqlPort  = "5432"
-	)
-
+	
 	config := PostgreSQLContainerConfig{
-		ImageTag: "latest",
 		User:     "anton",
 		Password: "lol",
 		DBName: "avito",
 	}
 
-	containerPort := psqlPort + "/tcp"
+	containerPort := "5432/tcp"
 
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
@@ -51,10 +45,8 @@ func NewPostgreSQLContainer(ctx context.Context) (*PostgreSQLContainer, error) {
 				"POSTGRES_PASSWORD": config.Password,
 				"POSTGRES_DB":       config.DBName,
 			},
-			ExposedPorts: []string{
-				containerPort,
-			},
-			Image:      fmt.Sprintf("%s:%s", psqlImage, config.ImageTag),
+			ExposedPorts: []string{containerPort},
+			Image:      "postgres:latest",
 			WaitingFor: wait.ForListeningPort(nat.Port(containerPort)),
 		},
 		Started: true,

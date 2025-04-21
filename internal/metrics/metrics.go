@@ -10,15 +10,15 @@ func init() {
 var (
 	RequestsTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
-			Help: "Total number of HTTP requests",
+			Name: "requests_total",
+			Help: "Кол-во запросов",
 		},
 	)
 
 	HttpResponseTime = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_response_time_seconds",
-			Help:    "Duration of HTTP requests",
+			Name:    "response_time_seconds",
+			Help:    "Длительность запросов",
 			Buckets: []float64{0.1, 0.3, 0.5, 0.7, 1, 1.5, 2, 3, 5},
 		},
 		[]string{"method", "path"},
@@ -27,21 +27,21 @@ var (
 	PvzCreatedTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "business_pvz_created_total",
-			Help: "Total number of PVZ (Пункты Выдачи Заказов) created",
+			Help: "Кол-во созданных ПВЗ",
 		},
 	)
 
 	OrderReceptionsCreatedTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "business_order_receptions_created_total",
-			Help: "Total number of order receptions (Приёмки заказов) created",
+			Help: "Кол-во созданных приемок",
 		},
 	)
 
 	ProductsAddedTotal = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "business_products_added_total",
-			Help: "Total number of products (Товары) added",
+			Help: "Кол-во добавленных продуктов",
 		},
 	)
 )

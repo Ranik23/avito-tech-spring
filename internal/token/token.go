@@ -23,7 +23,7 @@ func NewToken(secret string, logger *slog.Logger) Token {
 }
 
 func (j *token) GenerateToken(userID string, role string) (string, error) {
-	j.logger.Info("Generating token", "user_id", userID, "role", role)
+	j.logger.Info("Generating token", slog.String("user_id", userID), slog.String("role", role))
 
 	claims := jwt.MapClaims{
 		"user_id": userID,
@@ -34,11 +34,11 @@ func (j *token) GenerateToken(userID string, role string) (string, error) {
 	tokenString, err := token.SignedString(j.secret)
 
 	if err != nil {
-		j.logger.Error("Error generating token", "error", err)
+		j.logger.Error("Error generating token", slog.String("error", err.Error()))
 		return "", err
 	}
 
-	j.logger.Info("Token generated successfully", "user_id", userID)
+	j.logger.Info("Token generated successfully", slog.String("user_id", userID))
 	return tokenString, nil
 }
 
@@ -47,7 +47,7 @@ func (j *token) Parse(tokenString string) (map[string]interface{}, error) {
 
 	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			j.logger.Error("Invalid signature method", "method", token.Method)
+			j.logger.Error("Invalid signature method", slog.String("method", token.Method.Alg()))
 			return nil, jwt.ErrSignatureInvalid
 		}
 		return j.secret, nil
@@ -59,7 +59,7 @@ func (j *token) Parse(tokenString string) (map[string]interface{}, error) {
 	}
 
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
-		j.logger.Info("Token parsed successfully", "user_id", claims["user_id"])
+		j.logger.Info("Token parsed successfully", slog.String("user_id", claims["user_id"].(string)))
 		return claims, nil
 	}
 
