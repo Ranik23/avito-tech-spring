@@ -44,6 +44,7 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
+	
 	logger := slog.New(tint.NewHandler(os.Stdout, nil))
 	
 	logger.Info("Loading configuration...")

@@ -22,8 +22,8 @@ func LoadConfig(configPath, envPath string) (*Config, error) {
 		return nil, err
 	}
 
-	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
 	viper.AddConfigPath(configPath)
 
 	err = viper.ReadInConfig()

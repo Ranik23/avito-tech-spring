@@ -14,7 +14,7 @@ protoc:
     api/proto/pvz.proto
 
 docker:
-	docker build -t my-app .
+	docker compose up --build
 
 run:
 	go run cmd/main/main.go || true
